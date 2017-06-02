@@ -1,21 +1,42 @@
-<html>
-  <head>
-    <meta http-equiv="content-type" content="text/html; charset=utf-8">
-    <meta name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=0" />
-    <title>jQuery Feathers Chat</title>
-    <link rel="shortcut icon" href="favicon.ico">
-    <link rel="stylesheet" href="../base.css">
-    <link rel="stylesheet" href="../chat.css">
-  </head>
-  <body>
-    <div id="app" class="flex flex-column"></div>
-    <script src="http://cdnjs.cloudflare.com/ajax/libs/moment.js/2.12.0/moment.js"></script>
-    <script src="http://code.jquery.com/jquery-2.2.1.js"></script>
-    <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/core-js/2.1.4/core.min.js"></script>
-    <script src="http://npmcdn.com/feathers-client@^2.0.0-pre.1/dist/feathers.js">
-    </script>
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="app.js"></script>
-  </body>
-</html>
+  <html>
+    <head>
+      	<!--Import Google Icon Font-->
+      	<link href="http://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+      	<!-- Materialize CSS -->
+	    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.1/css/materialize.min.css">
+	    <link rel="stylesheet" href="//cdn.rawgit.com/feathersjs/feathers-chat/v0.1.0/public/base.css">
+    	<link rel="stylesheet" href="//cdn.rawgit.com/feathersjs/feathers-chat/v0.1.0/public/chat.css">
+		<link rel="stylesheet" href="./css/main.css">
+     	 <!--Let browser know website is optimized for mobile-->
+      	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    </head>
+    <body ng-app="Chat" ng-controller="mainCtrl">
+	    <div ng-controller="mainCtrl">
+
+		    
+		    <ng-include src="'./templates/colorLoader.html'" ></ng-include>  
+		    <h2 ng-show="error.trim()!='' && user==null"><center ng-bind="error" style="color: red;"></center></h2>
+		    <div ui-view=""></div>
+
+	    </div>
+		 <!--Import jQuery before materialize.js-->
+	    <script src="http://cdnjs.cloudflare.com/ajax/libs/moment.js/2.12.0/moment.js"></script>
+	    <script type="text/javascript" src="https://code.jquery.com/jquery-3.1.1.js"></script>
+	    <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/core-js/2.1.4/core.js"></script>
+	    <script src="http://npmcdn.com/feathers-client@^2.0.0-pre.1/dist/feathers.js">
+	    </script>
+	    <script src="/socket.io/socket.io.js"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.3/angular.js"></script>
+	    <!-- JavaScript for: jQuery, angular, materialize, and angular-materialize. All of which are needed. -->
+		<script src="js/third/webcam.min.js"></script>
+		<script src="js/third/angular-base64-upload.js"></script>
+		<script src="https://code.angularjs.org/1.6.3/angular-route.js"></script>
+		<script src="https://code.angularjs.org/1.6.3/angular-resource.js"></script>
+		 <!-- Compiled and minified JavaScript -->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.2/js/materialize.js"></script>
+		<script src="http://cdnjs.cloudflare.com/ajax/libs/angular-ui-router/0.3.2/angular-ui-router.js"></script>
+	    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular-materialize/0.2.2/angular-materialize.js"></script>
+	    <script type="text/javascript" src='https://rawgithub.com/gsklee/ngStorage/master/ngStorage.js'></script>
+		<script src="./js/main.js"></script>
+    </body>
+  </html>

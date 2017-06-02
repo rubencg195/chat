@@ -1,6 +1,7 @@
 const authentication = require('feathers-authentication');
 const jwt = require('feathers-authentication-jwt');
 const local = require('feathers-authentication-local');
+const afterUser = require('./hooks/after-user');
 
 
 module.exports = function () {
@@ -23,6 +24,9 @@ module.exports = function () {
       remove: [
         authentication.hooks.authenticate('jwt')
       ]
+    },
+    after:{
+      all:[afterUser()]
     }
   });
 };

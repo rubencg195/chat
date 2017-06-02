@@ -14,11 +14,16 @@ const query = 's=60';
 module.exports = function() {
   return function(hook) {
     // The user email
+    
     const { email } = hook.data;
+
+    console.log(hook);
     // Gravatar uses MD5 hashes from an email address to get the image
     const hash = crypto.createHash('md5').update(email).digest('hex');
-
     hook.data.avatar = `${gravatarUrl}/${hash}?${query}`;
+    hook.data.logged = true;
+
+    console.log(hook.data);
 
     // Hooks can either return nothing or a promise
     // that resolves with the `hook` object for asynchronous operations

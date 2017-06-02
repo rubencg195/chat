@@ -6,7 +6,8 @@ const processMessage = require('../../hooks/process-message');
 
 module.exports = {
   before: {
-    all: [ authenticate('jwt') ],
+    // all: [ authenticate('jwt') ],
+    all: [],
     find: [],
     get: [],
     create: [ processMessage() ],

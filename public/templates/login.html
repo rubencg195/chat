@@ -1,0 +1,26 @@
+
+    <main class="login container" ng-init="letItLog()">
+      <div class="row">
+        <div class="col-12 col-6-tablet push-3-tablet text-center">
+          <h1 class="font-100">Welcome Back</h1>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-12 col-6-tablet push-3-tablet col-4-desktop push-4-desktop text-center">
+          <!-- <form class="form" method="post" action="/authentication"> -->
+            <fieldset>
+              <input class="block" type="email" name="email" placeholder="email" ng-model="email">
+            </fieldset>
+            <fieldset>
+              <input class="block" type="password" name="password" placeholder="password" ng-model="password">
+            </fieldset>
+            <button id="login" class="button button-primary block login" ng-click="login({name, email, password})">
+              Login
+            </button>
+            <button id="goSignup" class="button button-primary block signup" ng-click="showSignup()">
+              Signup
+            </button>
+          <!-- </form> -->
+        </div>
+      </div>
+    </main>
