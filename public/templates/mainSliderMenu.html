@@ -7,7 +7,7 @@
 
 <nav class="nav-extended blue lighten-1"  ng-init="islogin()">
   <div class="nav-wrapper">
-     <a href="#!" class="brand-logo"> {{user.name}} - {{user.email}}</a>
+     <a href="#!" class="brand-logo" ng-bind="user.name" style="margin-left: 20px;">></a>
     <a href="#" data-activates="slide-out" class="button-collapse"><i class="material-icons">menu</i></a>
     <!-- <a href="#" data-activates="mobile-demo" class="button-collapse"><i class="material-icons">menu</i></a> -->
     <!-- <ul id="nav-mobile" class="right hide-on-med-and-down"> -->
@@ -25,7 +25,7 @@
   </div>
   <div class="nav-content">
     <ul class="tabs tabs-transparent">
-      <li class="tab"><a class="active"  href="#messages">Messages</a></li>
+      <li class="tab"><a class="active"  href="#msgs">Messages</a></li>
       <li class="tab"><a href="#channels">Channels</a></li>
       <li class="tab"><a href="#contacts">Contacts</a></li>
       <li class="tab"><a href="#gif">Create Emoji</a></li> <!-- disabled -->
@@ -33,7 +33,7 @@
     </ul>
   </div>
 </nav>
-<div id="messages" class="col s12"><chats></chats>  <ng-include src="'./templates/chats.html'" ></ng-include>  </div>
+<div id="msgs" class="col s12"> <ng-include src="'./templates/chats.html'" ></ng-include>  </div>
 <div id="channels" class="col s12">  <ng-include src="'./templates/channels.html'" ></ng-include>  </div>
 <div id="contacts" class="col s12">  <ng-include src="'./templates/contacts.html'" ></ng-include>  </div>
 <div id="gif" class="col s12 center">  <ng-include src="'./templates/gif.html'" ></ng-include>  </div>
@@ -63,28 +63,47 @@
     <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Cancel</a>
   </div>
 </div>
-
 <!-- Modal New Chat -->
 <div id="modalChat" class="modal modal-fixed-footer">
   <div class="modal-content">
     <h1>Create Private Room</h1>
     <p>Fill Out The Information</p><br>
-
-    <p>Select Participants</p><br>
-
-    <ul class="collection">
-      <li class="collection-item avatar" ng-repeat="usr in contacts" >
-        <i class="material-icons circle green"  >insert_chart</i>
-        <span class="title" > <h5 ng-bind="usr.name"></h5> </span>
-        <h6 ng-bind="usr.email"></h6>
-        <p ng-bind="usr.number"></p><br>
-        <a href="#!" class="secondary-content"><i class="material-icons">grade</i></a>
-      </li>
-    </ul>
-
+    <div ng-if="selectedContact!=null">
+      <p>Click To Select Another</p><br>
+      <ul class="collection"> 
+          <li class="collection-item avatar" ng-click="selectNextContact(selectedContact)">
+            <i class="material-icons circle green">insert_chart</i>
+            <span class="title">
+              <h5 ng-bind="selectedContact.contact.name"></h5>
+            </span>
+            <h6 ng-bind="selectedContact.contact.email"></h6>
+            <p ng-bind="selectedContact.contact._id"></p><br>
+            <a class="secondary-content">
+                <i class="material-icons" style="font-size: 50px;">done</i>
+            </a>
+          </li>
+      </ul>
+    </div>
+    <div ng-if="selectedContact==null">
+      <p>Select Participants</p><br>
+      <ul class="collection" ng-init="getContacts()">
+          <li class="collection-item avatar" ng-repeat="cData in Contacts"  
+          ng-click="selectNextContact(cData);cData.selected = true">
+            <i class="material-icons circle green">insert_chart</i>
+            <span class="title">
+              <h5 ng-bind="cData.contact.name"></h5>
+            </span>
+            <h6 ng-bind="cData.contact.email"></h6>
+            <p ng-bind="cData.contact._id"></p><br>
+            <a class="secondary-content"></a>
+          </li>
+      </ul>
+    </div>
   </div>
   <div class="modal-footer">
-    <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Agree</a>
+    <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat" 
+    ng-click="createRooms(true, '')" ng-hide="selectedContact==null">Create</a>
+    <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Cancel</a>
   </div>
 </div>
 
@@ -98,7 +117,7 @@
       <form class="col s12">
         <div class="row">
           <div class="input-field col s12">
-            <input id="email" type="email" class="validate">
+            <input id="selectedRoomName" type="text" class="validate" ng-model="selectedRoomName">
             <label for="email" data-error="wrong" data-success="right">Name</label>
           </div>
         </div>
@@ -107,19 +126,25 @@
 
     <p>Select Participants</p><br>
 
-    <ul class="collection">
-      <li class="collection-item avatar" ng-repeat="usr in contacts" >
-        <i class="material-icons circle green"  >insert_chart</i>
-        <span class="title" > <h5 ng-bind="usr.name"></h5> </span>
-        <h6 ng-bind="usr.email"></h6>
-        <p ng-bind="usr.number"></p><br>
-        <a href="#!" class="secondary-content"><i class="material-icons">grade</i></a>
-      </li>
+    <ul class="collection" ng-init="getContacts()">
+        <li class="collection-item avatar" ng-repeat="cData in Contacts" ng-click="cData.selected = !cData.selected ">
+          <i class="material-icons circle green"  ng-init="cData.selected = false">insert_chart</i>
+          <span class="title">
+            <h5 ng-bind="cData.contact.name"></h5>
+          </span>
+          <h6 ng-bind="cData.contact.email"></h6>
+          <p ng-bind="cData.contact._id"></p><br>
+          <a class="secondary-content">
+              <i class="material-icons" style="font-size: 50px;" ng-show="cData.selected">done</i>
+          </a>
+        </li>
     </ul>
 
   </div>
   <div class="modal-footer">
-    <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Agree</a>
+    <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat" 
+    ng-click="createRooms(false, selectedRoomName)" ng-show="selectedRoomName.trim()!='' ">Create</a>
+    <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Cancel</a>
   </div>
 </div>
 

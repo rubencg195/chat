@@ -46,19 +46,16 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 		}
 	}
     $scope.init =  function init(){
-		
+		$scope.selectedRoomName = '';
 		$scope.user = $localStorage.user;
         $scope.client = $localStorage.client;
         $scope.server = $localStorage.server;
 
 		if( $localStorage.user && $localStorage.client && $localStorage.server){
-			$scope.getRooms();
+			$scope.getRooms(true);
+			$scope.getRooms(false);
 			$scope.getContacts();
 		}
-		
-		$scope.contacts.push({name : "Rene", email: "asdsa@asdd.com", number:"545345", avatar:""});
-		$scope.contacts.push({name : "Carlos", email: "asdsa@asdd.com", number:"545345", avatar:""});
-
 		// Establish a Socket.io connection
 		$scope.socket = io();
 		// Initialize our Feathers client application through Socket.io
@@ -71,88 +68,187 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 		  storage: window.localStorage
 		}));
 		// Listen to created events and add the new message in real-time
-		$scope.client.service('messages').on('created', $scope.addMessage);
+		// $scope.client.service('messages').on('created', $scope.updateMessages );
 		// We will also see when new users get created in real-time
-		$scope.client.service('users').on('created', $scope.addUser);
-
+		// $scope.client.service('users').on('created', $scope.updateUsers );
 	};
 	$scope.cleanTmpData = function(){
 		$scope.chatUsers = [];
 		$scope.inChatMsgs = [];
-	};
-	$scope.updateUsers = function (){
 
-	};
-	$scope.updateChats = function (){
-
-	};
-	$scope.updateContacts = function (){
-
+		$scope.$apply();
 	};
 	$scope.createEmoji = function (){
+
+		$scope.$apply();
 
 	};
 	$scope.settings = function (){
 
+		$scope.$apply();
+
 	};
 	$scope.addUser = function(user){
 		$scope.chatUsers.push(user);
+		$scope.$apply();
 	};
 	$scope.deleteUser = function(user){
 		$scope.chatUsers.pop(user);
+		$scope.$apply();
 	};
 	$scope.addMessage = function(msg){
 		const sender = message.user || {};
 		$scope.chatUsers.push(msg);
+		$scope.$apply();
 	};
 	$scope.deleteMessage = function(msg){
 		$scope.chatUsers.pop(msg);
+		$scope.$apply();
 	};
 	$scope.sendMessage = function(){
 		const input = $('[name="text"]');
 	    $scope.client.service('messages').create({
 	      text: input.val()
 	    }).then(() => input.val(''));
+	    $scope.$apply();
 	};
-	$scope.getRooms = function(){
-	    $scope.client.service('rooms').find(/* {
-	      text: input.val()
-	    }*/).then(function(result){
-	    		console.log(result.data);
-	    		$scope.rooms = result.data;
+	$scope.getRooms = function(_private){
+	    $scope.client.service('rooms').find({
+		  query: {
+		    owner: $scope.user._id,
+		    private: _private
+		  }
+		}).then(function(result){
+    		if(_private){
+    			console.log("Rooms");
+	    		$scope.Rooms = result.data;
+	    		$scope.Rooms.forEach(function(room, ri){
+	    			room.participants.forEach(function(p, i){
+		    			$scope.findUserById(p.id).then(function(userData){
+		    				room.participants[i] = userData;		    				
+		    				$scope.$apply();
+		    			});
+		    		});
+	    		});
+	    		console.log($scope.Rooms);
+    		}else{
+    			console.log("Channels");
+	    		$scope.Channels = result.data;
+	    		$scope.Channels.forEach(function(channel, ri){
+	    			channel.participants.forEach(function(c, i){
+		    			$scope.findUserById(c.id).then(function(userData){
+		    				channel.participants[i] = userData;		    				
+		    				$scope.$apply();
+		    			});
+		    		});
+	    		});
+	    		console.log($scope.Channels);
+    		}
 	    });
 	};
-	$scope.createRooms = function(room){
+	$scope.createRooms = function( _private, _name){
+		let participants = []
+		$scope.Contacts.forEach(function(_cData){
+			if(_cData.selected)
+				participants.push({id: _cData.contact._id});
+		});
+		if(participants.length < 1){
+			$scope.Contacts.forEach(function(element){  element.selected = false;  });
+			$scope.error = "No Contacts Selected";
+			console.log($scope.error);
+		}else{
+			participants.push({id: $scope.user._id});
+			$scope.client.service('rooms').create({
+				owner: $scope.user._id,
+				img: img,
+				participants: participants,
+				private: _private,
+				name : _name
+		    }).then(function(result){
+		    	console.log("Room Created Private: "+_private);
+		    	// console.log(result.data);
+		    	console.log(participants);
+		    	$scope.Contacts.forEach(function(element){ element.selected = false; });
+		    	$scope.selectedRoomName = '';
+		    	$scope.getRooms(_private);
+		    });
+		}
+	};
+	$scope.updateRooms = function(room){
+		var participants = []
+		room.participants.forEach(function(_participant){
+			participants.push(_participant);
+		});
 	    $scope.client.service('rooms').create({
-			owner: room.owner,
-			img: _img,
-			owner: room.participants,
-			participants:[],
-			private: false
+			owner: $scope.user._id,
+			img: img,
+			participants: participants,
+			private: room.private
 	    }).then(function(result){
 	    	console.log(result.data);
+	    	$scope.$apply();
 	    });
+	    console.log(participants);
 	};
 	$scope.getContacts = function(){
-	    $scope.client.service('contacts').find(/* {
-	      text: input.val()
-	    }*/).then(function(result){
-	    	console.log(result.data);
+	    $scope.client.service('contacts').find({
+		  query: {
+		    owner: $scope.user._id
+		  }
+		}).then(function(result){
+    		// console.log("Contacts");
+    		$scope.Contacts = result.data;
+    		$scope.Contacts.forEach(function(contact, ci){
+    			$scope.findUserById(contact.owner).then(function(userData){
+    				contact.owner = userData;		    				
+    				$scope.$apply();
+    			});
+    			$scope.findUserById(contact.contact).then(function(userData){
+    				contact.contact = userData;		    				
+    				$scope.$apply();
+    			});
+    		});
+    		// console.log($scope.Contacts);
 	    });
 	};
-	$scope.createContacts = function(){
-	    $scope.client.service('contacts').create({
-			owner: "",
-			contact: ""
-	    }).then(function(result){
-	    	console.log(result.data);
-	    });
+	$scope.createContact = function(contactEmail){
+		$scope.findUsersByEmail(contactEmail).then(function(userData){
+			var newContact = userData;		
+			if(newContact != null){
+				console.log("Creating contact");
+				console.log(newContact);
+			}else{
+				$scope.error = "User Not Found"
+				console.log($scope.error);
+				return;
+			}
+		    $scope.client.service('contacts').create({
+				owner: $scope.user._id,
+				contact: newContact._id
+		    }).then(function(result){
+		    	console.log(result);
+		    	$scope.getContacts();
+		    });    				
+		});
 	};
+	$scope.selectNextContact = function(cData){
+		if($scope.selectedContact){
+			$scope.selectedContact.selected = false;
+			$scope.selectedContact = null;
+			$scope.Contacts.forEach(function(element){
+				element.selected = false;
+			});
+
+		}else{
+			$scope.selectedContact = cData;
+		}
+	}
 	$scope.getInvitations = function(){
 	    $scope.client.service('invitations').find(/* {
 	      text: input.val()
 	    }*/).then(function(result){
 	    	console.log(result.data);
+	    	$scope.$apply();
 	    });
 	};
 	$scope.createInvitations = function(){
@@ -162,12 +258,58 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 			roomId: ""
 	    }).then(function(result){
 	    	console.log(result.data);
+	    	$scope.$apply();
 	    });
 	};
-	$scope.findUserById = function(){
-
+	$scope.getUsers = function(){
+		$scope.client.service('users').find()
+	      .then(function(result) {
+      		console.log(result.data);
+      		$scope.$apply();
+      		return result.data;
+          })
+          .catch(function(error){
+            console.log(error);
+            $scope.$apply();
+            return null;
+        });
 	}
-	$scope.findUsersByEmail = function(email, redirect, location){
+	$scope.findUserById = function(id){
+        return new Promise((resolve, reject) => {
+        	$scope.client.service('users').find({
+			  query: {
+			    _id: id
+			  }
+			})
+		    .then(function(result) {
+		        resolve(result.data[0]);
+	          })
+	          .catch(function(error){
+	            console.log(error);
+	            $scope.error = error;
+			    reject(error);
+	        });
+		});
+	}
+	$scope.findUsersByEmail = function(_email){
+		return new Promise((resolve, reject) => {
+        	$scope.client.service('users').find({
+			  query: {
+			    email: _email
+			  }
+			})
+		    .then(function(result) {
+		    	console.log(result.data[0]);
+		        resolve(result.data[0]);
+	          })
+	          .catch(function(error){
+	            console.log(error);
+	            $scope.error = error;
+			    reject(error);
+	        });
+		});
+	}
+	$scope.findUsersToLogin = function(email, redirect, location){
 		$scope.client.service('users').find()
 	      .then(function(result) {
       		
@@ -181,6 +323,7 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 
             		console.log($scope.user);
             		// alert($scope.user.name);
+            		$scope.$apply();
             		if(redirect)
             			location();
             	}
@@ -190,6 +333,7 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
             console.log("NO PASO ");
             console.log(error);
             $scope.error = error;
+            $scope.$apply();
             $scope.showLogin();
           });
 	}
@@ -201,7 +345,8 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
           .then(function(result) {
             console.log("PASO ");
             $scope.result = result;
-            $scope.findUsersByEmail(credentials.email, true, $scope.showDashboard );
+            $scope.findUsersToLogin(credentials.email, true, $scope.showDashboard );
+            $scope.$apply();
           })
           .catch(function(error){
             $scope.error = "Error Login Up "+ credentials;
@@ -209,6 +354,7 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
             console.log(error);
             $scope.error = error;
             $scope.showLogin();
+            $scope.$apply();
           });
 	};
 	$scope.signup = function(credentials){
@@ -218,10 +364,12 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
       		console.log("PASO ");
       		console.log(result);
             $scope.login(credentials);
+            $scope.$apply();
           })
           .catch(function(error){
             $scope.error = "Error Signin Up";
             console.log(error);
+            $scope.$apply();
             // $scope.showSignup();
           });
 	};
@@ -251,14 +399,18 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
           email: $scope.formEmail,
           password:  $scope.formPassword
         };
+        $scope.$apply();
         return tmpUser;
 	};
 	$scope.joinRoom = function(roomId){
 		// const user = app.get('user');
+		$scope.$apply();
         return app.service('users').patch($scope.user.id, { rooms: $scope.user.rooms.concat(roomId) });
+
 	};
 	$scope.print = function(value){
 		console.log($scope.result);
+		$scope.$apply();
 	}
 	$scope.islogin = function(){
 		if($localStorage.user == null){
@@ -268,6 +420,16 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 	$scope.letItLog = function(){
 		if($localStorage.user != null){
 			$scope.showDashboard();
+		}
+	}
+	$scope.uploadGif = function(){
+		if (this.files && this.files[0]) {
+		    var FR = new FileReader();
+		    FR.addEventListener("load", function(e) {
+		      document.getElementById("img").src       = e.target.result;
+		      document.getElementById("b64").innerHTML = e.target.result;
+		    }); 
+		    FR.readAsDataURL( this.files[0] );
 		}
 	}
 	$scope.init();

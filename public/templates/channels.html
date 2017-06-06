@@ -1,9 +1,9 @@
-<ul class="collection">
-    <li class="collection-item avatar" ng-repeat="channel in Channels">
+<ul class="collection"  ng-init="getRooms(false)">
+    <li ui-sref="chat" class="collection-item avatar" ng-repeat="channel in Channels">
       <i class="material-icons circle green"  >insert_chart</i>
       <span class="title"><h5 ng-bind="channel.name"></h5></span>
       <h6 ng-bind=""></h6>
-      <p ng-bind="channel.data"></p><br>
+      <p ng-bind="channel.participants"></p><br>
       <a href="#!" class="secondary-content"><i class="material-icons">grade</i></a>
     </li>
 </ul>

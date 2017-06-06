@@ -1,9 +1,11 @@
-<ul class="collection" ng-init="getRooms()">
-  <li href="#!"  class="collection-item avatar" ng-repeat="room in rooms"  ng-click="OpenChat(msg); ">
+<ul class="collection"  ng-init="getRooms(true)">
+  <li ui-sref="chat" class="collection-item avatar" ng-repeat="room in Rooms"  ng-click="OpenChat(room._id); ">
 	  <i class="material-icons circle green"  >insert_chart</i>
-	  <span class="title"><h5 ng-bind="room.name"></h5></span>
-	  <h6 ng-bind="room.owner"></h6>
+	  <span class="title"><h4 ng-bind="room.participants[0].name">{{room}}</h4></span>
+	  <h5 ng-bind="room.owner"></h5>
 	  <!-- <p ng-bind="room.date"></p><br> -->
-	  <a href="#!" class="secondary-content"><i class="material-icons">grade</i></a>
+	  <a href="#!" class="secondary-content">
+	  	<i class="material-icons">grade</i>
+	  </a>
   </li>
 </ul>

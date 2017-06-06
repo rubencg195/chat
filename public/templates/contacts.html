@@ -1,9 +1,9 @@
-<ul class="collection">
-    <li class="collection-item avatar" ng-repeat="usr in contacts">
+<ul class="collection" ng-init="getContacts()">
+    <li ui-sref="chat" class="collection-item avatar" ng-repeat="usr in Contacts">
       <i class="material-icons circle green"  >insert_chart</i>
-      <span class="title"><h5 ng-bind="usr.name"></h5></span>
-      <h6 ng-bind="usr.email"></h6>
-      <p ng-bind="usr.number"></p><br>
+      <span class="title"><h5 ng-bind="usr.contact.name"></h5></span>
+      <h6 ng-bind="usr.contact.email"></h6>
+      <p ng-bind="usr.contact._id"></p><br>
       <a href="#!" class="secondary-content"><i class="material-icons">grade</i></a>
     </li>
 </ul>
