@@ -37,7 +37,7 @@
 <div id="channels" class="col s12">  <ng-include src="'./templates/channels.html'" ></ng-include>  </div>
 <div id="contacts" class="col s12">  <ng-include src="'./templates/contacts.html'" ></ng-include>  </div>
 <div id="gif" class="col s12 center">  <ng-include src="'./templates/gif.html'" ></ng-include>  </div>
-<div id="settings" class="col s12"> <ng-include s rc="'./templates/settings.html'" ></ng-include>  </div>
+<div id="settings" class="col s12"> <ng-include src="'./templates/settings.html'" ></ng-include>  </div>
 
 
 <!-- Modal Add Contact -->
@@ -70,7 +70,7 @@
     <p>Fill Out The Information</p><br>
     <div ng-if="selectedContact!=null">
       <p>Click To Select Another</p><br>
-      <ul class="collection"> 
+      <ul class="collection">
           <li class="collection-item avatar" ng-click="selectNextContact(selectedContact)">
             <i class="material-icons circle green">insert_chart</i>
             <span class="title">
@@ -87,7 +87,7 @@
     <div ng-if="selectedContact==null">
       <p>Select Participants</p><br>
       <ul class="collection" ng-init="getContacts()">
-          <li class="collection-item avatar" ng-repeat="cData in Contacts"  
+          <li class="collection-item avatar" ng-repeat="cData in Contacts"
           ng-click="selectNextContact(cData);cData.selected = true">
             <i class="material-icons circle green">insert_chart</i>
             <span class="title">
@@ -101,7 +101,7 @@
     </div>
   </div>
   <div class="modal-footer">
-    <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat" 
+    <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat"
     ng-click="createRooms(true, '')" ng-hide="selectedContact==null">Create</a>
     <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Cancel</a>
   </div>
@@ -142,7 +142,7 @@
 
   </div>
   <div class="modal-footer">
-    <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat" 
+    <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat"
     ng-click="createRooms(false, selectedRoomName)" ng-show="selectedRoomName.trim()!='' ">Create</a>
     <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Cancel</a>
   </div>

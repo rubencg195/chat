@@ -1,11 +1,11 @@
 'use strict';
 var domain = "http://localhost:3030/";
 var img = "http://images.clipartpanda.com/chat-clipart-dT7eGEonc.png";
-var app = angular.module('Chat', ['webcam','naif.base64', 'ngRoute', 'ngResource','ui.router', 'ui.materialize', 'ngStorage'])
+var app = angular.module('Chat', [/*'webcam',*/'naif.base64', 'ngRoute', 'ngResource','ui.router', 'ui.materialize', 'ngStorage'])
 app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $localStorage){
 	//$scope.user = {};
 	//$scope.error = '';
-   	$scope.channel = {
+   $scope.channel = {
 		name: "",
 		data: "",
 		img: "",
@@ -27,13 +27,42 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 	    filename : "profile.jpg",
 	    base64 :   "/9j/4AAQSkZJRgABAgAAAQABAAD//gAEKgD/4gIctcwIQA"
     };
-    $scope.chatUsers = [];
-    $scope.contacts = [];
+	$scope.chatUsers = [];
+  $scope.contacts = [];
 	$scope.inChatMsgs = [{name: "Ruben", data: "Hola",img: "", date: "12/12/17", read: false, visible: true},{name: "Carlos", data: "Cuando se arma la potra",img: "", date: "13/12/17", read: false, visible: true}];
 	$scope.Channels = [{name: "Futbol Team", data: "Hola",img: "", date: "12/12/17", read: false, visible: true},{name: "Work", data: "Cuando se arma la potra",img: "", date: "13/12/17", read: false, visible: true}];
 	$scope.onError = function (err) {};
 	$scope.onStream = function (stream) {};
 	$scope.onSuccess = function () {};
+	$scope.take_snapshot = function(){
+			Webcam.snap( function(data_uri) {
+					$scope.cameraURI = data_uri;
+					document.getElementById('my_result').innerHTML = '<img src="'+data_uri+'"/>';
+			} );
+	};
+	$scope.previewFile = function(){
+			var preview = $( "img#imgUpload" )[ 0 ];
+			var file    = $( "input#btnUpload" )[ 0 ].files[0];
+			var reader  = new FileReader();
+
+			preview.src = "./assets/loading.gif";
+
+			console.log(file);
+			console.log(preview);
+			reader.addEventListener("load", function () {
+				preview.src = reader.result;
+				$scope.imgUpload =  reader.result;
+				$scope.disabletUpload = false;
+				$scope.$apply();
+			}, false);
+
+			if (file) {
+				reader.readAsDataURL(file);
+			}
+
+			console.log(reader);
+
+	};
 	$scope.myChannel = {
     // the fields below are all optional
 	    videoHeight: 200,
@@ -44,8 +73,9 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 		if( $scope.user == null){
 			window.location.replace(domain+"login");
 		}
-	}
-    $scope.init =  function init(){
+	};
+  $scope.init =  function(){
+		$scope.disabletUpload = true;
 		$scope.selectedRoomName = '';
 		$scope.user = $localStorage.user;
         $scope.client = $localStorage.client;
@@ -96,6 +126,111 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 		$scope.chatUsers.pop(user);
 		$scope.$apply();
 	};
+	$scope.updateUser = function(_username, _name, _email, _img ) {
+				$scope.client.service('users').patch($scope.user._id, {
+						username: _username,
+						name: _name,
+						email: _email
+				})
+				.then(function(result){
+							console.log(result);
+							$scope.user = result;
+							$localStorage.user = result;
+							$scope.$apply();
+				});
+	};
+	$scope.addRoomToUser =  function( _userId,  _RoomId  ) {
+				$scope.findUserById( _userId ).then(function(userData){
+						let participantData = userData;
+						if( participantData.rooms == null){
+							participantData.rooms = [];
+						}
+						if(participantData.rooms.indexOf(_RoomId) != -1 ){
+							console.log("Room Ya Existe");
+							return;
+						}
+						participantData.rooms.push( _RoomId  );
+						console.log("Anadiendo Room a User "+participantData.name);
+						console.log(participantData);
+						$scope.client.service('users').patch( _userId, {
+								rooms: participantData.rooms
+						})
+						.then(function(result){
+									console.log(result);
+									if(result._id == $scope.user._id){
+										$scope.user = result;
+										$localStorage.user = result;
+									}
+									$scope.$apply();
+						});
+				});
+	};
+	$scope.deleteRoomToUser =  function( _userId,  _RoomId  ) {
+				$scope.findUserById( _userId ).then(function(userData){
+						let participantData = userData;
+						if( participantData.rooms == null){
+							participantData.rooms = [];
+						}
+						if(participantData.rooms.indexOf(_RoomId) == -1 ){
+							console.log("Room No Se puede Borrar, No Existe");
+							return;
+						}
+						participantData.rooms.splice(participantData.rooms.indexOf(_RoomId),1);
+						console.log("Borrando Room a User "+participantData.name);
+						console.log(participantData);
+						$scope.client.service('users').patch( _userId, {
+								rooms: participantData.rooms
+						})
+						.then(function(result){
+									console.log(result);
+									if(result._id == $scope.user._id){
+										$scope.user = result;
+										$localStorage.user = result;
+									}
+									$scope.$apply();
+						});
+				});
+	};
+	$scope.setLoggedUser = function( _id , _isLogged ) {
+				$scope.client.service('users').patch( _id, {
+						loggedIn: _isLogged
+				})
+				.then(function(result){
+							console.log(result);
+							if(result._id == $scope.user._id){
+								$scope.user = result;
+								$localStorage.user = result;
+							}
+							$scope.$apply();
+				});
+	};
+	$scope.addUserLoginFailure = function( _userId ) {
+		scope.findUserById( _userId ).then(function(userData){
+				let participantData = userData;
+				if( participantData.loginFailures == null){
+					participantData.loginFailures = 0;
+				}
+				if(participantData.loginFailures == 5 ){
+					participantData.loginFailures = 0;
+					$scope.sendEmailAndBlockUser( _userId );
+				}
+				$scope.client.service('users').patch( _userId, {
+						loginFailures: participantData.loginFailures
+				})
+				.then(function(result){
+							console.log(result);
+							if(result._id == $scope.user._id){
+								$scope.user = result;
+								$localStorage.user = result;
+							}
+							$scope.$apply();
+				});
+		});
+	};
+	$scope.sendEmailAndBlockUser = function( _userId ){
+
+
+	};
 	$scope.addMessage = function(msg){
 		const sender = message.user || {};
 		$scope.chatUsers.push(msg);
@@ -125,7 +260,7 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 	    		$scope.Rooms.forEach(function(room, ri){
 	    			room.participants.forEach(function(p, i){
 		    			$scope.findUserById(p.id).then(function(userData){
-		    				room.participants[i] = userData;		    				
+		    				room.participants[i] = userData;
 		    				$scope.$apply();
 		    			});
 		    		});
@@ -137,7 +272,7 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 	    		$scope.Channels.forEach(function(channel, ri){
 	    			channel.participants.forEach(function(c, i){
 		    			$scope.findUserById(c.id).then(function(userData){
-		    				channel.participants[i] = userData;		    				
+		    				channel.participants[i] = userData;
 		    				$scope.$apply();
 		    			});
 		    		});
@@ -161,7 +296,6 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 			$scope.client.service('rooms').create({
 				owner: $scope.user._id,
 				img: img,
-				participants: participants,
 				private: _private,
 				name : _name
 		    }).then(function(result){
@@ -200,11 +334,11 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
     		$scope.Contacts = result.data;
     		$scope.Contacts.forEach(function(contact, ci){
     			$scope.findUserById(contact.owner).then(function(userData){
-    				contact.owner = userData;		    				
+    				contact.owner = userData;
     				$scope.$apply();
     			});
     			$scope.findUserById(contact.contact).then(function(userData){
-    				contact.contact = userData;		    				
+    				contact.contact = userData;
     				$scope.$apply();
     			});
     		});
@@ -213,7 +347,7 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 	};
 	$scope.createContact = function(contactEmail){
 		$scope.findUsersByEmail(contactEmail).then(function(userData){
-			var newContact = userData;		
+			var newContact = userData;
 			if(newContact != null){
 				console.log("Creating contact");
 				console.log(newContact);
@@ -228,7 +362,7 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 		    }).then(function(result){
 		    	console.log(result);
 		    	$scope.getContacts();
-		    });    				
+		    });
 		});
 	};
 	$scope.selectNextContact = function(cData){
@@ -256,6 +390,16 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 			emailTo: "",
 			emailFrom: "",
 			roomId: ""
+	    }).then(function(result){
+	    	console.log(result.data);
+	    	$scope.$apply();
+	    });
+	};
+	$scope.createGif = function(_frase, _from, _img){
+	    $scope.client.service('gifs').create({
+					frase: _frase,
+					from: _from,
+					img: _img
 	    }).then(function(result){
 	    	console.log(result.data);
 	    	$scope.$apply();
@@ -312,7 +456,7 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 	$scope.findUsersToLogin = function(email, redirect, location){
 		$scope.client.service('users').find()
 	      .then(function(result) {
-      		
+
       		result.data.forEach(function(element){
             	if(element.email == email){
             		$scope.user = element;
@@ -395,9 +539,10 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 	};
 	$scope.getCredentials = function(){
 		const tmpUser = {
-		  name: $scope.formName,
+		  		name: $scope.formName,
           email: $scope.formEmail,
-          password:  $scope.formPassword
+          password:  $scope.formPassword,
+					rooms: []
         };
         $scope.$apply();
         return tmpUser;
@@ -428,7 +573,7 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 		    FR.addEventListener("load", function(e) {
 		      document.getElementById("img").src       = e.target.result;
 		      document.getElementById("b64").innerHTML = e.target.result;
-		    }); 
+		    });
 		    FR.readAsDataURL( this.files[0] );
 		}
 	}
@@ -458,29 +603,45 @@ app.config(function ($routeProvider, $locationProvider) {
 });
 app.config(function($stateProvider, $urlRouterProvider) {
 	$stateProvider
-    .state('index', { 
-        url: "/",               
-        templateUrl: "templates/menu.html"                            
+    .state('index', {
+        url: "/",
+        templateUrl: "templates/menu.html"
     })
-    .state('dashboard', { 
-        url: "/dashboard",               
-        templateUrl: "templates/dashboard.html"                            
+    .state('dashboard', {
+        url: "/dashboard",
+        templateUrl: "templates/dashboard.html"
     })
-    .state('login', { 
-        url: "/login",               
-        templateUrl: "templates/login.html"                            
+    .state('login', {
+        url: "/login",
+        templateUrl: "templates/login.html"
     })
-    .state('signup', { 
-        url: "/signup",               
-        templateUrl: "templates/signup.html"                            
+    .state('signup', {
+        url: "/signup",
+        templateUrl: "templates/signup.html"
     })
-    .state('chat', { 
-        url: "/chat",               
-        templateUrl: "templates/chat.html"                            
+    .state('chat', {
+        url: "/chat",
+        templateUrl: "templates/chat.html"
     })
-    .state('channel', { 
-        url: "/channel",               
-        templateUrl: "templates/channel.html"                            
+    .state('channel', {
+        url: "/channel",
+        templateUrl: "templates/channel.html"
     });
 });
 
+
+/*
+app.service('messages').update(1, {
+text: 'A patched message'
+})
+.then(message => console.log(message));
+const params = {
+query: { read: false }
+};
+// Mark all unread messages as read
+app.service('messages').patch(null, {
+read: true
+}, params);
+PATCH /messages/1
+{ "text": "A patched message" }
+*/

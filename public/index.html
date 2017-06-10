@@ -6,16 +6,16 @@
 	    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.1/css/materialize.min.css">
 	    <link rel="stylesheet" href="//cdn.rawgit.com/feathersjs/feathers-chat/v0.1.0/public/base.css">
     	<link rel="stylesheet" href="//cdn.rawgit.com/feathersjs/feathers-chat/v0.1.0/public/chat.css">
-		<link rel="stylesheet" href="./css/main.css">
-		<link rel="stylesheet" href="./css/font-awesome.css">
+		  <link rel="stylesheet" href="./css/main.css">
+		  <link rel="stylesheet" href="./css/font-awesome.css">
      	 <!--Let browser know website is optimized for mobile-->
       	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     </head>
     <body ng-app="Chat" ng-controller="mainCtrl">
 	    <div ng-controller="mainCtrl">
 
-		    
-		    <ng-include src="'./templates/colorLoader.html'" ></ng-include>  
+
+		    <ng-include src="'./templates/colorLoader.html'" ></ng-include>
 		    <h2 ng-show="error.trim()!='' && user==null"><center ng-bind="error" style="color: red;"></center></h2>
 		    <div ui-view=""></div>
 
@@ -29,7 +29,8 @@
 	    <script src="/socket.io/socket.io.js"></script>
 		<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.3/angular.js"></script>
 	    <!-- JavaScript for: jQuery, angular, materialize, and angular-materialize. All of which are needed. -->
-		<script src="js/third/webcam.min.js"></script>
+		<!-- <script src="js/third/webcam.min.js"></script> -->
+    <script src="js/third/webcam.js"></script>
 		<script src="js/third/angular-base64-upload.js"></script>
 		<script src="https://code.angularjs.org/1.6.3/angular-route.js"></script>
 		<script src="https://code.angularjs.org/1.6.3/angular-resource.js"></script>

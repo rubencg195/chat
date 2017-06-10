@@ -1,33 +1,29 @@
 <h1>Create emoji</h1>
 <h3>Upload Gif</h3>
-<!-- <form action="#">
-    <div class="file-field input-field">
-      <div class="btn">
-        <span>File</span>
-        <input type="file">
-      </div>
-      <div class="file-path-wrapper">
-        <input class="file-path validate" type="text" ng-model='newGIF' base-sixty-four-input>
-      </div>
+
+
+<div class="center">
+  <form action="#">
+
+    <div class="row">
+           <label class="active" for="first_name2">Frase</label>
+           <input value="Alvin" id="first_name2" type="text" class="validate" ng-model="gifFrase">
     </div>
+
+      <div class="file-field input-field">
+        <div class="btn">
+          <span>File</span>
+          <input id="btnUpload" type="file" >
+        </div>
+        <div class="file-path-wrapper">
+          <input id="inp" class="file-path validate" type="text" ng-model="fileUpload"  ng-change="previewFile()">
+        </div>
+      </div>
   </form>
-  
-https://stackoverflow.com/questions/17710147/image-convert-to-base64
-   -->
+  <!-- <input type="file" onchange="previewFile()"><br> -->
+  <img id="imgUpload" src="" height="200" alt="Image preview...">
+  {{imgUpload}}
 
-<form action="#">
-    <div class="file-field input-field">
-      <div class="btn">
-        <span>File</span>
-        <input type="file">
-      </div>
-      <div class="file-path-wrapper">
-        <input id="inp" class="file-path validate" type="text" ng-model='newGIF' ng-click="uploadGif()">
-      </div>
-    </div>
-</form>
+  <a class="waves-effect waves-light btn"  ng-disable="disabletUpload" ng-click="createGif(gifFrase, user._id, imgUpload)"><i class="material-icons right">cloud</i>CREATE</a>
 
-<p id="b64"></p>
-<img id="img" height="150">
-
-{{newGIF.filename}}
+</div>

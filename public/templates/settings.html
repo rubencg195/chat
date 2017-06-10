@@ -1,8 +1,55 @@
-<webcam class="center"
-	  placeholder="'https://media.giphy.com/media/xTk9ZvMnbIiIew7IpW/giphy.gif'"
-  on-stream="onStream(stream)"
-  on-streaming="onSuccess()"
-  on-error="onError(err)"
-  channel="myChannel">
-</webcam>
-{{myChannel.video}}
+
+
+
+<div class="container row">
+    <form class="col s12">
+			<div class="row">
+				<div class="input-field col s6">
+					<div id="my_camera" style="width:320px; height:240px;"></div>
+					<br>
+					<div id="my_result"></div>
+					<br>
+					<a class="waves-effect waves-light btn" ng-click="take_snapshot()"><i class="material-icons right">cloud</i>button</a>
+					{{cameraURI}}
+        </div>
+        <div class="input-field col s6">
+					<div class="row">
+						<i class="material-icons prefix">account_circle</i>
+	          <input placeholder="Placeholder" id="name" type="text" class="validate">
+	          <label for="name">Name</label>
+	        </div>
+	        <div class="row">
+						<i class="material-icons prefix">account_circle</i>
+	          <input placeholder="Placeholder" id="username" type="text" class="validate">
+	          <label for="username">Username</label>
+	        </div>
+					<div class="row">
+						<i class="material-icons prefix">account_circle</i>
+	          <input value="Email" id="email" type="email" class="validate">
+	          <label for="email">Email</label>
+	        </div>
+        </div>
+			</div>
+      <div class="row">
+        <div class="input-field col s6">
+					<i class="material-icons prefix">account_circle</i>
+          <input id="password" type="password" class="validate">
+          <label for="password">Password</label>
+        </div>
+				<div class="input-field col s6">
+					<i class="material-icons prefix">account_circle</i>
+          <input id="password" type="password" class="validate">
+          <label for="password">Password</label>
+        </div>
+      </div>
+			<div class="row center">
+				<a class="waves-effect waves-light btn" ng-click="updateUser('','','','')"><i class="material-icons right">cloud</i>CHANGE USER NAME</a>
+				<a class="waves-effect waves-light btn" ng-click="addRoomToUser(user._id, 'xcQayzANj4758F9o')"><i class="material-icons right">cloud</i>ADD ROOM TO USER</a>
+				<a class="waves-effect waves-light btn" ng-click="deleteRoomToUser(user._id, 'xcQayzANj4758F9o')"><i class="material-icons right">cloud</i>DELETE ROOM TO USER</a>
+			</div>
+    </form>
+</div>
+
+<script language="JavaScript">
+	Webcam.attach( '#my_camera' );
+</script>
