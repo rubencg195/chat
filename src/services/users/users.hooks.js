@@ -5,6 +5,7 @@ const { hashPassword } = require('feathers-authentication-local').hooks;
 const commonHooks  = require('feathers-hooks-common');
 const gravatar = require('../../hooks/gravatar');
 const { populate } = require('feathers-hooks-common');
+const creationMail = require('../../hooks/creation-mail');
 
 
 module.exports = {
@@ -24,12 +25,12 @@ module.exports = {
     patch: [],
     remove: [],
   },
-//populate("info",{ service: "users", field: "_id"}) 
+//populate("info",{ service: "users", field: "_id"})
   after: {
     all: [commonHooks.when(hook => hook.params.provider, commonHooks.discard('password'))],
     find: [],
     get: [],
-    create: [],
+    create: [creationMail()],
     update: [],
     patch: [],
     remove: []
