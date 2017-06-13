@@ -1,5 +1,5 @@
-<ul class="collection"  ng-init="getRooms(false)">
-    <li ui-sref="chat" class="collection-item avatar" ng-repeat="channel in Channels">
+<ul class="collection" >
+    <li class="collection-item avatar" ng-repeat="channel in Channels" ng-click="openChatByRoom(channel._id);">  <!--ui-sref="chat"-->
       <i class="material-icons circle green"  >insert_chart</i>
       <span class="title"><h5 ng-bind="channel.name"></h5></span>
       <h6 ng-bind=""></h6>

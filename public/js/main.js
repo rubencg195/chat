@@ -2,7 +2,7 @@
 var domain = "http://localhost:3030/";
 var img = "http://images.clipartpanda.com/chat-clipart-dT7eGEonc.png";
 var app = angular.module('Chat', [/*'webcam',*/'naif.base64', 'ngRoute', 'ngResource','ui.router', 'ui.materialize', 'ngStorage'])
-app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $localStorage){
+app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $localStorage, $timeout){
 	//$scope.user = {};
 	//$scope.error = '';
    $scope.channel = {
@@ -29,8 +29,9 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
     };
 	$scope.chatUsers = [];
   $scope.contacts = [];
-	$scope.inChatMsgs = [{name: "Ruben", data: "Hola",img: "", date: "12/12/17", read: false, visible: true},{name: "Carlos", data: "Cuando se arma la potra",img: "", date: "13/12/17", read: false, visible: true}];
-	$scope.Channels = [{name: "Futbol Team", data: "Hola",img: "", date: "12/12/17", read: false, visible: true},{name: "Work", data: "Cuando se arma la potra",img: "", date: "13/12/17", read: false, visible: true}];
+	$scope.chatMsgs = [];
+	$scope.Channels = [];
+	$scope.Rooms = [];
 	$scope.onError = function (err) {};
 	$scope.onStream = function (stream) {};
 	$scope.onSuccess = function () {};
@@ -44,9 +45,7 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 			var preview = $( "img#imgUpload" )[ 0 ];
 			var file    = $( "input#btnUpload" )[ 0 ].files[0];
 			var reader  = new FileReader();
-
 			preview.src = "./assets/loading.gif";
-
 			console.log(file);
 			console.log(preview);
 			reader.addEventListener("load", function () {
@@ -55,19 +54,10 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 				$scope.disabletUpload = false;
 				$scope.$apply();
 			}, false);
-
 			if (file) {
 				reader.readAsDataURL(file);
 			}
-
 			console.log(reader);
-
-	};
-	$scope.myChannel = {
-    // the fields below are all optional
-	    videoHeight: 200,
-	    videoWidth: 200,
-	    video: null // Will reference the video element on success
 	};
 	$scope.verifyUser = function(){
 		if( $scope.user == null){
@@ -82,8 +72,7 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
         $scope.server = $localStorage.server;
 
 		if( $localStorage.user && $localStorage.client && $localStorage.server){
-			$scope.getRooms(true);
-			$scope.getRooms(false);
+			$scope.getRooms();
 			$scope.getContacts();
 		}
 		// Establish a Socket.io connection
@@ -108,16 +97,6 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 
 		$scope.$apply();
 	};
-	$scope.createEmoji = function (){
-
-		$scope.$apply();
-
-	};
-	$scope.settings = function (){
-
-		$scope.$apply();
-
-	};
 	$scope.addUser = function(user){
 		$scope.chatUsers.push(user);
 		$scope.$apply();
@@ -137,58 +116,6 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 							$scope.user = result;
 							$localStorage.user = result;
 							$scope.$apply();
-				});
-	};
-	$scope.addRoomToUser =  function( _userId,  _RoomId  ) {
-				$scope.findUserById( _userId ).then(function(userData){
-						let participantData = userData;
-						if( participantData.rooms == null){
-							participantData.rooms = [];
-						}
-						if(participantData.rooms.indexOf(_RoomId) != -1 ){
-							console.log("Room Ya Existe");
-							return;
-						}
-						participantData.rooms.push( _RoomId  );
-						console.log("Anadiendo Room a User "+participantData.name);
-						console.log(participantData);
-						$scope.client.service('users').patch( _userId, {
-								rooms: participantData.rooms
-						})
-						.then(function(result){
-									console.log(result);
-									if(result._id == $scope.user._id){
-										$scope.user = result;
-										$localStorage.user = result;
-									}
-									$scope.$apply();
-						});
-				});
-	};
-	$scope.deleteRoomToUser =  function( _userId,  _RoomId  ) {
-				$scope.findUserById( _userId ).then(function(userData){
-						let participantData = userData;
-						if( participantData.rooms == null){
-							participantData.rooms = [];
-						}
-						if(participantData.rooms.indexOf(_RoomId) == -1 ){
-							console.log("Room No Se puede Borrar, No Existe");
-							return;
-						}
-						participantData.rooms.splice(participantData.rooms.indexOf(_RoomId),1);
-						console.log("Borrando Room a User "+participantData.name);
-						console.log(participantData);
-						$scope.client.service('users').patch( _userId, {
-								rooms: participantData.rooms
-						})
-						.then(function(result){
-									console.log(result);
-									if(result._id == $scope.user._id){
-										$scope.user = result;
-										$localStorage.user = result;
-									}
-									$scope.$apply();
-						});
 				});
 	};
 	$scope.setLoggedUser = function( _id , _isLogged ) {
@@ -240,89 +167,187 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 		$scope.chatUsers.pop(msg);
 		$scope.$apply();
 	};
-	$scope.sendMessage = function(){
-		const input = $('[name="text"]');
+	$scope.sendMessage = function(_msg){
+			if($scope.currentRoom == null || $scope.user._id || _msg == null){
+				console.log("INFORMATION NOT VALID");
+			}
 	    $scope.client.service('messages').create({
-	      text: input.val()
-	    }).then(() => input.val(''));
-	    $scope.$apply();
+				room: $scope.currentRoom,
+				from: $scope.user._id,
+	      text: _msg
+	    }).then(result=>{
+				console.log(result);
+				$scope.$apply();
+			});
+
 	};
-	$scope.getRooms = function(_private){
-	    $scope.client.service('rooms').find({
-		  query: {
-		    owner: $scope.user._id,
-		    private: _private
-		  }
+	$scope.updateMessage = function(){
+		$scope.client.service('messages').find({
+			query: {
+				room: $scope.currentRoom
+			}
 		}).then(function(result){
-    		if(_private){
-    			console.log("Rooms");
-	    		$scope.Rooms = result.data;
-	    		$scope.Rooms.forEach(function(room, ri){
-	    			room.participants.forEach(function(p, i){
-		    			$scope.findUserById(p.id).then(function(userData){
-		    				room.participants[i] = userData;
-		    				$scope.$apply();
-		    			});
-		    		});
-	    		});
-	    		console.log($scope.Rooms);
-    		}else{
-    			console.log("Channels");
-	    		$scope.Channels = result.data;
-	    		$scope.Channels.forEach(function(channel, ri){
-	    			channel.participants.forEach(function(c, i){
-		    			$scope.findUserById(c.id).then(function(userData){
-		    				channel.participants[i] = userData;
-		    				$scope.$apply();
-		    			});
-		    		});
-	    		});
-	    		console.log($scope.Channels);
-    		}
-	    });
+			  $scope.chatMsgs = result.data;
+				console.log(result);
+		});
+	};
+	$scope.getRooms = function(){
+		$scope.Rooms = [];
+		$scope.Channels = [];
+		$scope.client.service('users').get($scope.user._id).then(function(result){
+			$scope.user = result;
+			$localStorage.user = result;
+			if($scope.user.rooms == null){
+				$scope.user.rooms = [];
+			}
+			$scope.user.rooms.forEach(function(_roomId){
+					$scope.client.service('rooms').get(_roomId).then(function(room_result){
+						if(room_result.private != null){
+							if(room_result.private == true){
+								$scope.Rooms.push(room_result);
+							}else{
+								$scope.Channels.push(room_result);
+							}
+						}
+						$scope.$apply();
+					}).catch(error=>{
+						console.log("Room "+_roomId+" no se hallo "+error);
+						$scope.deleteRoomToUser( $scope.user._id,  _roomId  );
+					});
+			});
+	 });
 	};
 	$scope.createRooms = function( _private, _name){
 		let participants = []
+		let selectedContacts = [];
 		$scope.Contacts.forEach(function(_cData){
-			if(_cData.selected)
+			if(_cData.selected){
 				participants.push({id: _cData.contact._id});
+				selectedContacts.push(_cData.contact);
+			}
 		});
 		if(participants.length < 1){
 			$scope.Contacts.forEach(function(element){  element.selected = false;  });
 			$scope.error = "No Contacts Selected";
-			console.log($scope.error);
 		}else{
-			participants.push({id: $scope.user._id});
-			$scope.client.service('rooms').create({
-				owner: $scope.user._id,
-				img: img,
-				private: _private,
-				name : _name
-		    }).then(function(result){
-		    	console.log("Room Created Private: "+_private);
-		    	// console.log(result.data);
-		    	console.log(participants);
-		    	$scope.Contacts.forEach(function(element){ element.selected = false; });
-		    	$scope.selectedRoomName = '';
-		    	$scope.getRooms(_private);
-		    });
+			let valid = true;
+			if(_private){
+				_name = selectedContacts[0].name;
+				$scope.Rooms.forEach(function(_room){
+					console.log(_room.name + " - "+ _name);
+					if(_room.name == _name){
+						console.log('Room Ya Existe, Use otro nombre o eliga otro Usuario');
+						valid = false;
+					}
+				});
+			}else{
+				$scope.Channels.forEach(function(_room){
+					console.log(_room.name + " - "+ _name);
+					if(_room.name == _name){
+						console.log('Room Ya Existe, Use otro nombre o eliga otro Usuario');
+						valid = false;
+					}
+				});
+			}
+			if(valid){
+				participants.push({id: $scope.user._id});
+				$scope.client.service('rooms').create({
+					owner: $scope.user._id,
+					img: img,
+					private: _private,
+					name : _name
+			    }).then(function(result){
+						participants.forEach(function(_pa){
+							$scope.addRoomToUser( _pa.id  , result._id );
+						});
+			    	$scope.Contacts.forEach(function(element){ element.selected = false; });
+			    	$scope.selectedRoomName = '';
+			    });
+			}
 		}
+		$timeout(function () {
+			$scope.getRooms();
+		}, 250);
 	};
-	$scope.updateRooms = function(room){
-		var participants = []
-		room.participants.forEach(function(_participant){
-			participants.push(_participant);
-		});
-	    $scope.client.service('rooms').create({
-			owner: $scope.user._id,
-			img: img,
-			participants: participants,
-			private: room.private
-	    }).then(function(result){
-	    	console.log(result.data);
-	    	$scope.$apply();
-	    });
-	    console.log(participants);
+	$scope.addRoomToUser =  function( _userId,  _RoomId  ) {
+				$scope.findUserById( _userId ).then(function(userData){
+						let participantData = userData;
+						if( participantData.rooms == null){
+							participantData.rooms = [];
+						}
+						if(participantData.rooms.indexOf(_RoomId) != -1 ){
+							console.log("Room Ya Existe");
+							return;
+						}
+						participantData.rooms.push( _RoomId  );
+						$scope.client.service('users').patch( _userId, {
+								rooms: participantData.rooms
+						})
+						.then(function(result){
+									if(result._id == $scope.user._id){
+										$scope.user = result;
+										$localStorage.user = result;
+									}
+						});
+				});
+	};
+	$scope.deleteRoomToUser =  function( _userId,  _RoomId  ) {
+				$scope.findUserById( _userId ).then(function(userData){
+						let participantData = userData;
+						if( participantData.rooms == null){
+							participantData.rooms = [];
+						}
+						if(participantData.rooms.indexOf(_RoomId) == -1 ){
+							return;
+						}
+						participantData.rooms.splice(participantData.rooms.indexOf(_RoomId),1);
+						console.log("Borrando Room a User "+participantData.name);
+						$scope.client.service('users').patch( _userId, {
+								rooms: participantData.rooms
+						})
+						.then(function(result){
+									if(result._id == $scope.user._id){
+										$scope.user = result;
+										$localStorage.user = result;
+									}
+									$scope.$apply();
+						});
+				});
+				$timeout(function () {
+					$scope.getRooms();
+				}, 250);
+	};
+	$scope.openChatByRoom = function(roomId) {
+			$scope.client.service('rooms').get(roomId).then(roomResult => {
+					$scope.currentRoom = roomResult;
+					$scope.client.service('users').find().then(result =>{
+							if(result.data != null){
+								$scope.currentRoom.participants = [];
+								result.data.forEach(function(_user){
+									if(_user.rooms != null && _user.rooms.indexOf($scope.currentRoom._id) != -1  )
+										$scope.currentRoom.participants.push(_user);
+								});
+								// console.log($scope.currentRoom);
+								$scope.showChat();
+							}
+					});
+			}).catch(error => {
+				console.log("Room No Existe");
+			});
+	};
+	$scope.openChatByContact = function(_user){
+		let alreadyInChat = false;
+		if(_user.rooms != null){
+			_user.rooms.forEach(function(_roomId){
+				for (var i = 0; i < $scope.Rooms.length; i++) {
+					if($scope.Rooms[i]._id == _roomId){
+						console.log("Found Match "+roomId);
+					}
+				}
+			});
+		}else{
+
+		}
 	};
 	$scope.getContacts = function(){
 	    $scope.client.service('contacts').find({
@@ -546,12 +571,6 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
         };
         $scope.$apply();
         return tmpUser;
-	};
-	$scope.joinRoom = function(roomId){
-		// const user = app.get('user');
-		$scope.$apply();
-        return app.service('users').patch($scope.user.id, { rooms: $scope.user.rooms.concat(roomId) });
-
 	};
 	$scope.print = function(value){
 		console.log($scope.result);
