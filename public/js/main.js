@@ -126,10 +126,64 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 			let tmpVal = val;
 			let outVal = '';
 
-			let outVal2 = '';
-			let tmpVal2 = val;
+			//CHECK FOR UNDERLINE
+			while( tmpVal.indexOf('~') != -1 &&  cont < 500){
+				let fX = tmpVal.indexOf('~');
+				if(fX != -1){
+					tmpVal = tmpVal.slice(0,fX) + tmpVal.slice(fX+1);
+					let sX = tmpVal.indexOf('~');
+					if(sX != -1 ){
+						let subStr = tmpVal.slice(fX, sX);
+						outVal += tmpVal.slice(0, fX ) +"<del>"+subStr+"</del>";
+						tmpVal = tmpVal.slice(sX+1);
+					}
+				}
+				cont++;
+			}
+			outVal += tmpVal;
+			tmpVal = outVal;
+			outVal = '';
+			cont = 0;
 
+			//CHECK FOR ITALIC
+			while( tmpVal.indexOf('_') != -1 &&  cont < 500){
+				let fX = tmpVal.indexOf('_');
+				if(fX != -1){
+					tmpVal = tmpVal.slice(0,fX) + tmpVal.slice(fX+1);
+					let sX = tmpVal.indexOf('_');
+					if(sX != -1 ){
+						let subStr = tmpVal.slice(fX, sX);
+						outVal += tmpVal.slice(0, fX ) +"<i>"+subStr+"</i>";
+						tmpVal = tmpVal.slice(sX+1);
+					}
+				}
+				cont++;
+			}
+			outVal += tmpVal;
+			tmpVal = outVal;
+			outVal = '';
+			cont = 0;
 
+			//CHECK FOR BOLD
+			while( tmpVal.indexOf('*') != -1 &&  cont < 500){
+				let fX = tmpVal.indexOf('*');
+				if(fX != -1){
+					tmpVal = tmpVal.slice(0,fX) + tmpVal.slice(fX+1);
+					let sX = tmpVal.indexOf('*');
+					if(sX != -1 ){
+						let subStr = tmpVal.slice(fX, sX);
+						outVal += tmpVal.slice(0, fX ) +"<b>"+subStr+"</b>";
+						tmpVal = tmpVal.slice(sX+1);
+					}
+				}
+				cont++;
+			}
+			outVal += tmpVal;
+			tmpVal = outVal;
+			outVal = '';
+			cont = 0;
+
+			//CHECK FOR IMAGES
 			while( tmpVal.indexOf('(') != -1 &&  cont < 500){
 				let fX = tmpVal.indexOf('(');
 				let sX = tmpVal.indexOf(')');
@@ -144,9 +198,6 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 
 								outVal += tmpVal.slice(0, fX ) +"<img src='"+_gif.img+"' height='50' >";
 								tmpVal = tmpVal.slice(sX+1);
-
-								outVal2 = outVal2 + tmpVal2.slice(0, fX ) +"<img src='"+_gif.frase+"' height='50' >";
-								tmpVal2 = tmpVal2.slice(sX+1);
 								
 							}
 						});
