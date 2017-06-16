@@ -1,8 +1,8 @@
 'use strict';
 var domain = "http://localhost:3030/";
 var img = "http://images.clipartpanda.com/chat-clipart-dT7eGEonc.png";
-var app = angular.module('Chat', [/*'webcam',*/'naif.base64', 'ngRoute', 'ngResource','ui.router', 'ui.materialize', 'ngStorage'])
-app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $localStorage, $timeout){
+var app = angular.module('Chat', [/*'webcam',*/'naif.base64', 'ngRoute', 'ngResource','ui.router', 'ui.materialize', 'ngStorage', 'ngSanitize'])
+app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $localStorage, $timeout,$sce){
 	//$scope.user = {};
 	//$scope.error = '';
    $scope.channel = {
@@ -41,23 +41,171 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 					document.getElementById('my_result').innerHTML = '<img src="'+data_uri+'"/>';
 			} );
 	};
-	$scope.previewFile = function(){
-			var preview = $( "img#imgUpload" )[ 0 ];
-			var file    = $( "input#btnUpload" )[ 0 ].files[0];
+	$scope.previewFile = function( imgTag, btnTag ){
+			$scope.imgUpload =  null;
+			let pStr = "img#"+imgTag;
+			let fStr = "input#"+btnTag; 
+			var preview = $( pStr )[ 0 ];
+			var file    = $( fStr )[ 0 ].files[0];
 			var reader  = new FileReader();
 			preview.src = "./assets/loading.gif";
-			console.log(file);
-			console.log(preview);
+			
 			reader.addEventListener("load", function () {
-				preview.src = reader.result;
-				$scope.imgUpload =  reader.result;
-				$scope.disabletUpload = false;
-				$scope.$apply();
+				let tmp = new Image();
+				tmp.src = reader.result;
+
+				console.log("File Size "+ file.size/1024 + " W: "+tmp.width+" H: "+tmp.height );
+				// console.log(tmp);
+
+				if( (file.size/1024) < 50  ){
+					preview.src = reader.result;
+					$scope.imgUpload =  reader.result;
+					$scope.disabletUpload = false;
+					$scope.$apply();
+				}else{
+					preview.src = "https://us.123rf.com/450wm/roxanabalint/roxanabalint1702/roxanabalint170200113/71064094-no-es-v-lido-grunge-sello-de-goma-en-el-fondo-blanco-ilustraci-n-vectorial.jpg?ver=6";
+					console.log("Dimensiones no Validas");
+				}
+				
+				
 			}, false);
 			if (file) {
 				reader.readAsDataURL(file);
 			}
 			console.log(reader);
+	};
+	$scope.createGif = function(_frase, _from){
+		let _img = $scope.imgUpload;
+		if(_img != null && _frase != null && _from != null){
+			$scope.client.service('gifs').create({
+						frase: _frase,
+						from: _from,
+						img: _img
+		    }).then(function(result){
+				var preview = $( "img#imgUpload" )[ 0 ];
+				preview.src = 'https://s-media-cache-ak0.pinimg.com/736x/f8/3e/13/f83e13fc005394433a6a76a793f11042.jpg';
+				$scope.gifFrase = '';
+				$('input#inp').val('');
+		    	$scope.$apply();
+		    });
+		}else{
+			console.log("GIf No correcto");
+		}
+	    
+	};
+	$scope.uploadGif = function(){
+		if (this.files && this.files[0]) {
+		    var FR = new FileReader();
+		    FR.addEventListener("load", function(e) {
+		      document.getElementById("img").src       = e.target.result;
+		      document.getElementById("b64").innerHTML = e.target.result;
+		    });
+		    FR.readAsDataURL( this.files[0] );
+		}
+	};
+	$scope.previewGifSelection = function(Selection){
+		if($scope.gifSelection == null)
+			$scope.gifSelection = '';
+		$scope.gifSelection = $scope.gifSelection +"("+ Selection + ') ';
+		console.log($scope.gifSelection);
+	};
+	$scope.addGifToChat = function(){
+		if($scope.currentMsg == null)
+			$scope.currentMsg = '';
+		if($scope.gifSelection == null)
+			$scope.gifSelection = '';
+		// $scope.currentMsg = $scope.currentMsg + $scope.gifSelection + ' ';
+		$('input#currentMsg').val( $('input#currentMsg').val() + $scope.gifSelection + ' ' );
+		$scope.gifSelection = '';
+		console.log($scope.currentMsg);
+	};
+	$scope.processImg = function(val, _pID){
+		// console.log('INIT Process');
+		if(val != null){
+			let cont = 0;
+			let tmpVal = val;
+			let outVal = '';
+
+			let outVal2 = '';
+			let tmpVal2 = val;
+
+
+			while( tmpVal.indexOf('(') != -1 &&  cont < 500){
+				let fX = tmpVal.indexOf('(');
+				let sX = tmpVal.indexOf(')');
+
+				if(fX != -1){
+					if(sX == -1 ){
+						tmpVal = tmpVal.slice(fX+1);
+					}else{
+						let subStr = tmpVal.slice(fX+1, sX);
+						$scope.Gifs.forEach(function(_gif){
+							if(_gif.frase == subStr && tmpVal.trim() != ''){
+
+								outVal += tmpVal.slice(0, fX ) +"<img src='"+_gif.img+"' height='50' >";
+								tmpVal = tmpVal.slice(sX+1);
+
+								outVal2 = outVal2 + tmpVal2.slice(0, fX ) +"<img src='"+_gif.frase+"' height='50' >";
+								tmpVal2 = tmpVal2.slice(sX+1);
+								
+							}
+						});
+					}
+				}
+				cont++;
+			}
+			outVal += tmpVal;
+
+
+			return outVal;
+		} 
+	};
+	$scope.previewChatImg = function(){
+		var img = $( "img#imgUploadChat" )[ 0 ];
+		var file    = $( "input#file" )[ 0 ].files[0];
+		var reader  = new FileReader();
+		img.src = "./assets/loading.gif";
+		$scope.imageReady = false;
+
+		reader.addEventListener("load", function () {
+			img.src = reader.result;
+			$scope.imgUpload =  reader.result;
+			$scope.disabletUpload = false;
+
+			img.src = reader.result;
+			img.onload = function() {
+		        var MAX_WIDTH = 25;
+		        var MAX_HEIGHT = 25;
+		        var tempW = img.width;
+		        var tempH = img.height;
+		        if (tempW > tempH) {
+		            if (tempW > MAX_WIDTH) {
+		               tempH *= MAX_WIDTH / tempW;
+		               tempW = MAX_WIDTH;
+		            }
+		        } else {
+		            if (tempH > MAX_HEIGHT) {
+		               tempW *= MAX_HEIGHT / tempH;
+		               tempH = MAX_HEIGHT;
+		            }
+		        }
+		 
+		        var canvas = $( "canvas#canvas" )[ 0 ] ;
+		        canvas.width = tempW;
+		        canvas.height = tempH;
+		        var ctx = canvas.getContext("2d");
+		        ctx.drawImage(this, 0, 0, tempW, tempH);
+		        var dataURL = canvas.toDataURL("image/jpeg");
+		 		console.log($( "canvas#canvas" )[ 0 ] );
+		 		$scope.imageReady = true;
+		 		$scope.imageUri = reader.result;
+		 		$scope.$apply();
+	        }
+		}, false);
+		if (file) {
+			reader.readAsDataURL(file);
+		}
+		console.log(reader);
 	};
 	$scope.verifyUser = function(){
 		if( $scope.user == null){
@@ -70,10 +218,37 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 		$scope.user = $localStorage.user;
         $scope.client = $localStorage.client;
         $scope.server = $localStorage.server;
+		$scope.currentRoom = $localStorage.currentRoom;
+		
 
-		if( $localStorage.user && $localStorage.client && $localStorage.server){
+
+		if( $localStorage.user && $localStorage.client ){
 			$scope.getRooms();
 			$scope.getContacts();
+			$scope.profileUsername = $scope.user.username;
+			$scope.profileName = $scope.user.name;
+			$scope.profileEmail = $scope.user.email;
+
+			$scope.client.service('notifications').on('created', function(_notice){
+				if(_notice.data){
+					if($scope.Notifications == null)
+						$scope.Notifications = [];
+					_notice.data.forEach(function(_notice){
+						$scope.Notifications.push(_notice);
+					});
+				}
+			});
+			$scope.client.service('notifications').find({
+				query:{
+					from : $scope.user._id
+				}
+			}, function(_notice){
+				if(_notice.data){
+					_notice.data.forEach(function(){
+						
+					});
+				}
+			});
 		}
 		// Establish a Socket.io connection
 		$scope.socket = io();
@@ -86,14 +261,89 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 		$scope.client.configure(feathers.authentication({
 		  storage: window.localStorage
 		}));
-		// Listen to created events and add the new message in real-time
-		// $scope.client.service('messages').on('created', $scope.updateMessages );
+
+		$.contextMenu({
+			    // define which elements trigger this menu
+		    selector: ".click-menu",
+		    // define the elements of the menu
+		    items: {
+		        friend: {name: "Agregar como amigo", callback: function(key, opt){ 
+		        	console.log("agregar amigo!"); 
+		        	$timeout(function () {
+						console.log($scope.contextUsrSelected);
+					}, 100);		        	
+		        }},
+		        private: {name: "Iniciar chat privado", callback: function(key, opt){ 
+		        	console.log("privado!");
+		        	console.log($scope.contextUsrSelected);
+		        }},
+		        info: {name: "Ver información del perfil", callback: function(key, opt){ 
+		        	console.log("perfil!"); 
+		        	console.log($scope.contextUsrSelected);
+		        }}
+		    }
+		    // there's more, have a look at the demos and docs...
+		});
+
+		
 		// We will also see when new users get created in real-time
 		// $scope.client.service('users').on('created', $scope.updateUsers );
+		console.log("INIT");
+		// console.log($scope);
+		// console.log($scope.client);
 	};
+	$scope.initChat = function(){
+		console.log("INIT CHAT");
+		// console.log($scope.currentRoom);
+		if($scope.currentRoom != null && $localStorage.user && $scope.client ){
+			$scope.getRooms();
+			$scope.getContacts();
+			$scope.inChatMsgs = [];
+			$scope.client.service("messages").find().then(_messages=>{
+				_messages.data.forEach(function(_message) {
+					if(_message.room == $scope.currentRoom._id){
+							$scope.inChatMsgs.push(_message);
+							// console.log($scope.inChatMsgs);
+					}
+				});
+			});
+			$scope.client.service("gifs").find().then(Gifs=>{
+				if($scope.Gifs == null)
+					$scope.Gifs = [];
+				Gifs.data.forEach(function(_gif) {
+					$scope.Gifs.push(_gif);
+				});
+				// console.log($scope.processImg(' Hola como estas (mad) jaja (alone) asdasd (pensando) '))
+			});
+			// Listen to created events and add the new message in real-time
+			$scope.client.service('messages').on('created', function(msgData){
+					if($scope.currentRoom != null){
+						if($scope.inChatMsgs == null){
+							$scope.inChatMsgs = [];
+						}
+						if(msgData.room == $scope.currentRoom._id){
+							if( $scope.inChatMsgs.indexOf(msgData) == -1 ){
+								$scope.inChatMsgs.push(msgData);
+							}else {
+								console.log("Mensaje ya exite");
+							}
+						}else{
+							console.log("Mensaje no pertenece a este room");
+						}
+					}
+					$scope.$apply();
+			});
+		}else{
+			console.log($scope.currentRoom);
+			console.log( $localStorage.user );
+			console.log($localStorage.client);
+			console.log("FAILED TO INIT CHAT");
+		}
+	};
+
 	$scope.cleanTmpData = function(){
 		$scope.chatUsers = [];
-		$scope.inChatMsgs = [];
+
 
 		$scope.$apply();
 	};
@@ -106,21 +356,29 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 		$scope.$apply();
 	};
 	$scope.updateUser = function(_username, _name, _email, _img ) {
-				$scope.client.service('users').patch($scope.user._id, {
-						username: _username,
-						name: _name,
-						email: _email
-				})
-				.then(function(result){
-							console.log(result);
-							$scope.user = result;
-							$localStorage.user = result;
-							$scope.$apply();
-				});
+		if(_img == null)
+			_img = "https://ssl.gstatic.com/images/branding/product/1x/avatar_circle_blue_512dp.png";
+		if(_username != null && _name != null && _email != null && _img != null ){
+			$scope.client.service('users').patch($scope.user._id, {
+					username: _username,
+					name: _name,
+					email: _email,
+					img: _img
+			})
+			.then(function(result){
+						console.log(result);
+						$scope.user = result;
+						$localStorage.user = result;
+						$scope.$apply();
+			});
+		}else{
+			console.log("Informacion Incorrecta Perfil");
+		}
+		
 	};
 	$scope.setLoggedUser = function( _id , _isLogged ) {
 				$scope.client.service('users').patch( _id, {
-						loggedIn: _isLogged
+						logged: _isLogged
 				})
 				.then(function(result){
 							console.log(result);
@@ -167,20 +425,45 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 		$scope.chatUsers.pop(msg);
 		$scope.$apply();
 	};
-	$scope.sendMessage = function(_msg){
-			if($scope.currentRoom == null || $scope.user._id || _msg == null){
+	$scope.sendMessage = function(_msg, _img){
+			$scope.imageReady = false;
+			// $scope.currentRoom = $localStorage.currentRoom;
+			if($scope.currentRoom == null || $scope.user._id == null || _msg == null || _msg.trim() == ''){
+				// console.log($scope.currentRoom);
+				// console.log($scope.user);
+				// console.log(_msg);
 				console.log("INFORMATION NOT VALID");
+			}else{
+				let roomId = $scope.currentRoom._id;
+				let fromId = $scope.user;
+				$scope.client.service('messages').create({
+						room: roomId,
+						from: fromId,
+			      		text: _msg,
+			      		img: _img
+			    }).then(result=>{
+			    		$("input#currentMsg").val("");
+			    		$scope.currentMsg = '';
+			    		// console.log($scope);
+						// console.log(result);
+						// console.log($scope.currentRoom);
+						// console.log($scope.user);
+						// console.log(_msg);
+
+				});
 			}
-	    $scope.client.service('messages').create({
-				room: $scope.currentRoom,
-				from: $scope.user._id,
-	      text: _msg
-	    }).then(result=>{
-				console.log(result);
-				$scope.$apply();
-			});
+	};
+
+	$scope.$watch('currentMsg', function(newValue, oldValue){
+	    if(newValue){
+
+	    }
+	}, true);
+
+	$scope.watchMsgNotice = function(_msg){
 
 	};
+
 	$scope.updateMessage = function(){
 		$scope.client.service('messages').find({
 			query: {
@@ -216,6 +499,22 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 					});
 			});
 	 });
+	};
+	$scope.checkRoomExistByParticipant = function(_userId){
+		// Return a new promise.
+		return new Promise(function(resolve, reject) {
+		      // so check the status
+
+		      if (true) {
+		        // Resolve the promise with the response text
+		        resolve(true);
+		      }
+		      else {
+		        // Otherwise reject with the status text
+		        // which will hopefully be a meaningful error
+		        reject(false);
+		      }
+		});
 	};
 	$scope.createRooms = function( _private, _name){
 		let participants = []
@@ -327,7 +626,8 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 									if(_user.rooms != null && _user.rooms.indexOf($scope.currentRoom._id) != -1  )
 										$scope.currentRoom.participants.push(_user);
 								});
-								// console.log($scope.currentRoom);
+								console.log($scope.currentRoom);
+								$localStorage.currentRoom = $scope.currentRoom;
 								$scope.showChat();
 							}
 					});
@@ -415,16 +715,6 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 			emailTo: "",
 			emailFrom: "",
 			roomId: ""
-	    }).then(function(result){
-	    	console.log(result.data);
-	    	$scope.$apply();
-	    });
-	};
-	$scope.createGif = function(_frase, _from, _img){
-	    $scope.client.service('gifs').create({
-					frase: _frase,
-					from: _from,
-					img: _img
 	    }).then(function(result){
 	    	console.log(result.data);
 	    	$scope.$apply();
@@ -564,39 +854,29 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 	};
 	$scope.getCredentials = function(){
 		const tmpUser = {
-		  		name: $scope.formName,
+		  name: $scope.formName,
           email: $scope.formEmail,
           password:  $scope.formPassword,
-					rooms: []
+		  rooms: [],
+		  img: "https://ssl.gstatic.com/images/branding/product/1x/avatar_circle_blue_512dp.png"
         };
         $scope.$apply();
         return tmpUser;
 	};
 	$scope.print = function(value){
-		console.log($scope.result);
-		$scope.$apply();
-	}
+		console.log(value);
+	};
 	$scope.islogin = function(){
 		if($localStorage.user == null){
 			$scope.showSignup();
 		}
-	}
+	};
 	$scope.letItLog = function(){
 		if($localStorage.user != null){
 			$scope.showDashboard();
 		}
-	}
-	$scope.uploadGif = function(){
-		if (this.files && this.files[0]) {
-		    var FR = new FileReader();
-		    FR.addEventListener("load", function(e) {
-		      document.getElementById("img").src       = e.target.result;
-		      document.getElementById("b64").innerHTML = e.target.result;
-		    });
-		    FR.readAsDataURL( this.files[0] );
-		}
-	}
-	$scope.init();
+	};
+	
 });
 app.config(function ($routeProvider, $locationProvider) {
     $routeProvider
@@ -646,6 +926,17 @@ app.config(function($stateProvider, $urlRouterProvider) {
         url: "/channel",
         templateUrl: "templates/channel.html"
     });
+});
+app.directive('ngRightClick', function($parse) {
+    return function(scope, element, attrs) {
+        var fn = $parse(attrs.ngRightClick);
+        element.bind('contextmenu', function(event) {
+            scope.$apply(function() {
+                event.preventDefault();
+                fn(scope, {$event:event});
+            });
+        });
+    };
 });
 
 

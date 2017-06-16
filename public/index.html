@@ -3,11 +3,14 @@
       	<!--Import Google Icon Font-->
       	<link href="http://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
       	<!-- Materialize CSS -->
-	    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.1/css/materialize.min.css">
-	    <link rel="stylesheet" href="//cdn.rawgit.com/feathersjs/feathers-chat/v0.1.0/public/base.css">
-    	<link rel="stylesheet" href="//cdn.rawgit.com/feathersjs/feathers-chat/v0.1.0/public/chat.css">
-		  <link rel="stylesheet" href="./css/main.css">
-		  <link rel="stylesheet" href="./css/font-awesome.css">
+	    <link rel="stylesheet" href="./js/dependencies/materialize.min.css">
+	    <link rel="stylesheet" href="./js/dependencies/base.css">
+    	<link rel="stylesheet" href="./js/dependencies/chat.css">
+		<link rel="stylesheet" href="./css/main.css">
+		<link rel="stylesheet" href="./css/font-awesome.css">
+
+	   <link rel="stylesheet" href="./js/contextMenu/jquery.contextMenu.css">
+
      	 <!--Let browser know website is optimized for mobile-->
       	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     </head>
@@ -17,28 +20,36 @@
 
 		    <ng-include src="'./templates/colorLoader.html'" ></ng-include>
 		    <h2 ng-show="error.trim()!='' && user==null"><center ng-bind="error" style="color: red;"></center></h2>
-		    <div ui-view=""></div>
+		    <div ng-init="init()" ui-view=""></div>
 
 	    </div>
 		 <!--Import jQuery before materialize.js-->
-	    <script src="http://cdnjs.cloudflare.com/ajax/libs/moment.js/2.12.0/moment.js"></script>
-	    <script type="text/javascript" src="https://code.jquery.com/jquery-3.1.1.js"></script>
-	    <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/core-js/2.1.4/core.js"></script>
-	    <script src="http://npmcdn.com/feathers-client@^2.0.0-pre.1/dist/feathers.js">
+	    <script src="./js/dependencies/moment.js"></script>
+	    <script type="text/javascript" src="./js/dependencies/jquery-3.1.1.js"></script>
+	    <script type="text/javascript" src="./js/dependencies/core.js"></script>
+	    <script src="./js/dependencies/feathers.js">
 	    </script>
 	    <script src="/socket.io/socket.io.js"></script>
-		<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.3/angular.js"></script>
+		<script src="./js/dependencies/angular.js"></script>
 	    <!-- JavaScript for: jQuery, angular, materialize, and angular-materialize. All of which are needed. -->
 		<!-- <script src="js/third/webcam.min.js"></script> -->
-    <script src="js/third/webcam.js"></script>
+    	
 		<script src="js/third/angular-base64-upload.js"></script>
-		<script src="https://code.angularjs.org/1.6.3/angular-route.js"></script>
-		<script src="https://code.angularjs.org/1.6.3/angular-resource.js"></script>
+		<script src="./js/dependencies/angular-route.js"></script>
+		<script src="./js/dependencies/angular-resource.js"></script>
 		 <!-- Compiled and minified JavaScript -->
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.2/js/materialize.js"></script>
-		<script src="http://cdnjs.cloudflare.com/ajax/libs/angular-ui-router/0.3.2/angular-ui-router.js"></script>
-	    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular-materialize/0.2.2/angular-materialize.js"></script>
-	    <script type="text/javascript" src='https://rawgithub.com/gsklee/ngStorage/master/ngStorage.js'></script>
+		<script src="./js/dependencies/materialize.js"></script>
+		<script src="./js/dependencies/angular-ui-router.js"></script>
+		<script src="./js/dependencies/angular-sanitize.min.js"></script>
+
+	    <script type="text/javascript" src="./js/dependencies/angular-materialize.js"></script>
+	    <script type="text/javascript" src='./js/dependencies/ngStorage.js'></script>
+
+	    <script src="./js/contextMenu/jquery.contextMenu.js"></script>
+	    <script src="./js/contextMenu/jquery.ui.position.js"></script>
+	    
+
+	    <<!-- script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/core-js/2.1.4/core.min.js"></script> -->
 
 	    <!-- <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/angular_material/1.0.0/angular-material.min.css"> -->
 	    <!-- <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script> -->
@@ -49,5 +60,8 @@
 
 
 		<script src="./js/main.js"></script>
+
+		
+		
     </body>
   </html>

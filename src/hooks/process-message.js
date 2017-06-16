@@ -14,14 +14,16 @@ module.exports = function() {
       // Do some basic HTML escaping
       .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
+      hook.data.text = text;
+      hook.data.createdAt =  new Date().getTime();
     // Override the original data
-    hook.data = {
-      text,
-      // Set the user id
-      userId: user._id,
-      // Add the current time via `getTime`
-      createdAt: new Date().getTime()
-    };
+    // hook.data = {
+    //   text,
+    // Set the user id
+    // userId: user._id,
+    // Add the current time via `getTime`
+    // createdAt: new Date().getTime()
+    // };
 
     // Hooks can either return nothing or a promise
     // that resolves with the `hook` object for asynchronous operations

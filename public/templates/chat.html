@@ -1,12 +1,27 @@
-<ng-include src="'./templates/mainNav.html'" ></ng-include>
+<ul id="slide-out" class="side-nav  {{fixedNav}}" ng-init="initChat()" style=" z-index: 999;">  <!-- fixed -->
+  <li><div class="userView">
+      <div class="background">
+        <img src="./assets/img.jpg">
+      </div>
+      <a href="#!user"><img class="circle" src="./assets/img.jpg"></a>
+      <a href="#!name"><span class="white-text name" ng-bind="user.name">J</span></a>
+      <a href="#!email"><span class="white-text email" ng-bind="user.email"></span></a>
+    </div>
+  </li>
+  <!-- <li><a href="#!"><i class="material-icons">cloud</i>First Link With Icon</a></li> -->
+  <li><a href="#!"></a>Back</li>
+  <li><div class="divider"></div></li>
+  <li><a class="subheader">Participants</a></li>
+  <li  ng-repeat="_participant in currentRoom.participants" ng-click=""><a class="waves-effect">{{_participant.name}}</a></li>
+</ul>
 
-<div style="margin-left:300px;"> <!--style="padding-left: 300px;"-->
-  <nav class="nav-extended blue lighten-1 fixed"  ng-init="islogin();fixedNav='fixed'" > <!-- style="padding-right:17%;"-->
+
+  <nav class="nav-extended blue lighten-1 fixed"  ng-init="islogin();fixedNav='fixed'" style="padding-left:300px; padding-right:100px; z-index: 99;"> <!-- style="padding-right:17%;"-->
     <div class="nav-wrapper">
-       <a href="#!" class="brand-logo" ng-bind="user.name" style="margin-left: 20px;">></a>
+       <a href="#!" class="brand-logo" ng-bind="currentRoom.name" style="margin-left: 20px;">></a>
       <a href="#" data-activates="slide-out" class="button-collapse"><i class="material-icons">menu</i></a>
       <ul id="nav-mobile" class="right hide-on-med-and-down " >
-        <li><a ng-click="" href="#modalToChat">Add Contact To Chat</a></li>
+        <li><a ng-click="" href="#modalParticipant">Add Contact To Chat</a></li>
         <li><a href="" ng-click="logout()" >Logout</a></li>
         <li><a ui-sref="dashboard">Back</a></li>
       </ul>
@@ -17,8 +32,28 @@
     </div>
   </nav>
 
-  <div class="container" style="padding-top: 80px; padding-left: 30px;">
-      <div class="" style="padding-top: 5px;">
+  <div class="container" style="padding-top: 80px; padding-bottom:40px;">
+      <center>
+        
+        <div class="click-menu" style="padding-top: 5px;" ng-repeat="_msg in inChatMsgs" >
+        <div style="border-radius:50px;border: 2px solid#0099ff;width:500px; " ng-right-click="contextUsrSelected = _msg.from; print(contextUsrSelected)">
+          <div class="row">
+            <div class="col s2" style="padding-left: 30px; ">
+              <img src="{{_msg.from.img}}" alt="Contact Person" style="border-radius: 50%; width: 60px;" >
+            </div>
+            <div class="col s10" style="padding-left: 20px;" ng-init="">
+              <strong> {{_msg.from.name}}</strong>
+              <div ng-bind-html="processImg(_msg.text,_msg._id)"></div>
+              <!-- <p>{{_msg.text}}</p> -->
+              <img ng-show="_msg.img != '' " src="{{_msg.img}}" width="300" style="padding-right: 30px;">
+            </div>
+          </div>
+        </div>
+
+      </center>
+
+      </div>
+      <!-- <div class="" style="padding-top: 5px; float:right;">
         <div style="border-radius: 50px; border: 2px solid  #0099ff;  padding-top: 10px;  width: 500px; height: 100px; ">
           <div class="row">
             <div class="col s2" style="padding-left: 30px; ">
@@ -30,43 +65,160 @@
             </div>
           </div>
         </div>
-      </div>
-      <div class="" style="padding-top: 5px; float:right;">
-        <div style="border-radius: 50px; border: 2px solid  #0099ff;  padding-top: 10px;  width: 500px; height: 100px; ">
-          <div class="row">
-            <div class="col s2" style="padding-left: 30px; ">
-              <img src="http://materializecss.com/images/yuna.jpg" alt="Contact Person" style="border-radius: 50%; width: 60px;" >
-            </div>
-            <div class="col s10" style="padding-left: 20px;">
-              <strong> Jane Doe</strong>
-              <p>Hola</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      </div> -->
   </div>
 
-  <div class="container-fluid blue lighten-1s" style="height: 60px; position: fixed;bottom: 0;width: 100%;">
+  <div class="container-fluid blue lighten-1s" style="height: 60px; position: fixed;bottom: 0;width: 100%; padding-left:300px;">
     <!-- <input type="text" name="" value="" style="margin:10px; width:60%;"> -->
     <div class="row ">
       <div class="col s8">
-        <input type="text" name="" value="" style="width:100%; margin-left:10px;" ng-model="currentMsg">
+        <input id="currentMsg" type="text" name="" value="" style="width:100%; margin-left:10px;" ng-model="currentMsg" ng-keyup="$event.keyCode == 13 && sendMessage(currentMsg, '')">
       </div>
       <div class="col s3">
-        <i class="material-icons white-text" style="font-size:40px; margin-left:20px;" ng-click="sendMessage(currentMsg)">input</i>
-        <i class="material-icons white-text" style="font-size:40px; margin-left:20px;">perm_media</i>
-        <i class="material-icons white-text" style="font-size:40px; margin-left:20px;">add</i>
+        <i class="material-icons white-text" style="font-size:40px; margin-left:20px;" ng-click="sendMessage(currentMsg, '')">input</i>
+        <a href="#modalGif"><i class="fa fa-smile-o fa-3x" aria-hidden="true" style="margin-left:20px; color: white"></i></a>
+        <a href="#modalImg"><i class="material-icons white-text" style="font-size:40px; margin-left:20px;">perm_media</i></a>
+        <!-- <i class="material-icons white-text" style="font-size:40px; margin-left:20px;">add</i>
         <i class="material-icons white-text" style="font-size:38px; margin-left:20px;">present_to_all</i>
-      </div>
+ -->      </div>
     </div>
   </div>
-
-  <div id="sidebar" class="scroll container" >
-    <ul>
-    </ul>
+<!-- Modal New Chat -->
+<div id="modalParticipant" class="modal modal-fixed-footer">
+  <div class="modal-content">
+    <h1>Create Private Room</h1>
+    <p>Fill Out The Information</p><br>
+    <div ng-if="selectedContact!=null">
+      <p>Click To Select Another</p><br>
+      <ul class="collection">
+          <li class="collection-item avatar" ng-click="selectNextContact(selectedContact)">
+            <i class="material-icons circle green">insert_chart</i>
+            <span class="title">
+              <h5 ng-bind="selectedContact.contact.name"></h5>
+            </span>
+            <h6 ng-bind="selectedContact.contact.email"></h6>
+            <p ng-bind="selectedContact.contact._id"></p><br>
+            <a class="secondary-content">
+                <i class="material-icons" style="font-size: 50px;">done</i>
+            </a>
+          </li>
+      </ul>
+    </div>
+    <div ng-if="selectedContact==null">
+      <p>Select Participants</p><br>
+      <ul class="collection" ng-init="getContacts()">
+          <li class="collection-item avatar" ng-repeat="cData in Contacts"
+          ng-click="selectNextContact(cData);cData.selected = true">
+            <i class="material-icons circle green">insert_chart</i>
+            <span class="title">
+              <h5 ng-bind="cData.contact.name"></h5>
+            </span>
+            <h6 ng-bind="cData.contact.email"></h6>
+            <p ng-bind="cData.contact._id"></p><br>
+            <a class="secondary-content"></a>
+          </li>
+      </ul>
+    </div>
   </div>
-
-  <!-- <div style="position: fixed; height: 60px; bottom: 0px; width: 100%;" class=" blue lighten-1s">
-        <input type="" name=""  style="position: fixed; left:20px; bottom: 20px; width: 70%;">
-  </div> -->
+  <div class="modal-footer">
+    <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat"
+    ng-click="" ng-hide="">Add</a>
+    <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Cancel</a>
+  </div>
 </div>
+<!-- Modal New Chat -->
+<div id="modalImg" class="modal modal-fixed-footer">
+  <div class="modal-content">
+    <h1>Upload Image</h1>
+    <br>
+    <input id="currentMsg" type="text" ng-model="currentMsg">
+
+    <div class="file-field input-field">
+      <div class="btn">
+        <span>Upload Image</span>
+        <input id="file" type="file" >
+      </div>
+      <div class="file-path-wrapper">
+        <input id="inp" class="file-path validate" type="text" ng-model="fileUpload"  ng-change="previewChatImg()">
+        <div class="center">
+            <img id="imgUploadChat" src="">
+            <h3>Resized Before Upload</h3>
+            <canvas id="canvas"></canvas>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <div class="modal-footer">
+    <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat"
+    ng-click="sendMessage(currentMsg, imageUri)" ng-show="imageReady && currentMsg != '' ">Send Image</a>
+    <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Cancel</a>
+  </div>
+</div>
+<!-- Modal New Chat -->
+<div id="modalGif" class="modal modal-fixed-footer">
+  <div class="modal-content">
+    <h1>Add Gif</h1>
+    <br>
+    
+    <h3 id="gifSelec"></h3>
+
+    <div class="row">
+      <div class="col-xs-3" ng-repeat="gif in Gifs" ng-click="previewGifSelection(gif.frase)">
+          <img src="{{gif.img}}" height="100"><br>
+          <p>({{gif.frase}})</p>
+      </div>
+    </div>
+
+    <!-- <input type="file" id="file"/> -->
+    
+  </div>
+  <div class="modal-footer" >
+    <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat"
+    ng-click="addGifToChat()" ng-hide="">Add</a>
+    <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Cancel</a>
+  </div>
+</div>
+
+<script type="text/javascript">
+  $('.modal').modal();
+  $('.collapsible').collapsible();
+
+</script>
+<!-- <script type="text/javascript">
+  // setup jQuery to watch the ajax progress
+  $.ajaxSetup({
+      xhr: function () {
+        var xhr = new window.XMLHttpRequest();
+        // upload progress
+        xhr.addEventListener("progress", function (evt) {
+            if (evt.lengthComputable) {
+                var percentComplete = evt.loaded / evt.total;
+                console.log('upload progress: ', Math.round(percentComplete * 100) + "%");
+            }   
+        }, false);
+        return xhr;
+      }
+  });
+  const uploadService = app.service('gifs');
+  const reader = new FileReader();
+  // encode selected files
+  $(document).ready(function(){
+      $('input#file').change(function(){
+          var file = this.files[0];
+          // encode dataURI
+          reader.readAsDataURL(file);
+      })
+  });
+  // when encoded, upload
+  reader.addEventListener("load", function () {
+      console.log('encoded file: ', reader.result);
+      var upload = uploadService
+                  .create({uri: reader.result})
+                  .then(function(response){
+                        // success
+                        alert('UPLOADED!! ');
+                        console.log('Server responded with: ', response);
+                  }); 
+  }, false);
+</script> -->
