@@ -14,7 +14,7 @@ const query = 's=60';
 module.exports = function() {
   return function(hook) {
     // The user email
-    
+
     const { email } = hook.data;
 
     console.log(hook);

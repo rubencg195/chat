@@ -1,11 +1,11 @@
-
+const decode = require('../../hooks/base64-download');
 
 module.exports = {
   before: {
     all: [],
     find: [],
     get: [],
-    create: [],
+    create: [decode()],
     update: [],
     patch: [],
     remove: []

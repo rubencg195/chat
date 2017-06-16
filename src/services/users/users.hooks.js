@@ -6,6 +6,7 @@ const commonHooks  = require('feathers-hooks-common');
 const gravatar = require('../../hooks/gravatar');
 const { populate } = require('feathers-hooks-common');
 const creationMail = require('../../hooks/creation-mail');
+const regex = require('../../hooks/regex');
 
 
 module.exports = {
@@ -20,7 +21,7 @@ module.exports = {
     all: [],
     find: [],
     get: [],
-    create: [hashPassword(), gravatar()],
+    create: [regex(), hashPassword(), gravatar()],
     update: [],
     patch: [],
     remove: [],
