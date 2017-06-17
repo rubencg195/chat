@@ -5,8 +5,8 @@ module.exports = function (options = {}) { // eslint-disable-line no-unused-vars
   return function (hook) {
     // Hooks can either return nothing or a promise
     // that resolves with the `hook` object for asynchronous operations
-    console.log("HERE");
-     // console.log(hook);
+    console.log("HERE Notification");
+     console.log(hook.data);
      if(hook.data.type == "block"){
      	console.log("Blocking Account");
      }

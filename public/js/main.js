@@ -275,10 +275,22 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
         $scope.client = $localStorage.client;
         $scope.server = $localStorage.server;
 		$scope.currentRoom = $localStorage.currentRoom;
-		
+		$scope.error = $localStorage.error;
+
+		// Establish a Socket.io connection
+		$scope.socket = io();
+		// Initialize our Feathers client application through Socket.io
+		// with hooks and authentication.
+		$scope.client = feathers();
+		$scope.client.configure(feathers.socketio($scope.socket));
+		$scope.client.configure(feathers.hooks());
+		// Use localStorage to store our login token
+		$scope.client.configure(feathers.authentication({
+		  storage: window.localStorage
+		}));
 
 
-		if( $localStorage.user && $localStorage.client ){
+		if( $localStorage.user &&  $scope.client){
 			$scope.getRooms();
 			$scope.getContacts();
 			$scope.profileUsername = $scope.user.username;
@@ -286,7 +298,8 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 			$scope.profileEmail = $scope.user.email;
 
 			$scope.client.service('notifications').on('created', function(_notice){
-				if(_notice.data){
+				console.log(_notice);
+				if(_notice && _notice.data){
 					if($scope.Notifications == null)
 						$scope.Notifications = [];
 					_notice.data.forEach(function(_notice){
@@ -299,24 +312,15 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 					from : $scope.user._id
 				}
 			}, function(_notice){
-				if(_notice.data){
+				console.log(_notice);
+				if(_notice && _notice.data){
 					_notice.data.forEach(function(){
 						
 					});
 				}
 			});
 		}
-		// Establish a Socket.io connection
-		$scope.socket = io();
-		// Initialize our Feathers client application through Socket.io
-		// with hooks and authentication.
-		$scope.client = feathers();
-		$scope.client.configure(feathers.socketio($scope.socket));
-		$scope.client.configure(feathers.hooks());
-		// Use localStorage to store our login token
-		$scope.client.configure(feathers.authentication({
-		  storage: window.localStorage
-		}));
+		
 
 		$.contextMenu({
 			    // define which elements trigger this menu
@@ -348,6 +352,7 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 		// console.log($scope);
 		// console.log($scope.client);
 	};
+
 	$scope.initChat = function(){
 		console.log("INIT CHAT");
 		// console.log($scope.currentRoom);
@@ -451,15 +456,21 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 		            $scope.findUsersToLogin(credentials.email, true, $scope.showDashboard );
 		            $scope.$apply();	
 				}).catch(function(){
-					$scope.logout();
+					$scope.setLoggedUser( $stateParams.id , false );
+					$scope.client.logout().then(function(){
+							$localStorage.user = null;
+							localStorage.client = null;
+				       		$localStorage.server = null;
+
+				    });
 				});
 	          })
 	          .catch(function(error){
-	            $scope.error = "Error Login Up "+ credentials;
+	            $scope.error = "Error Activating User, Credentials Not Valid ";
 	            console.log("NO PASO ");
 	            console.log(error);
-	            $scope.error = error;
-	            $scope.showLogin();
+	            // $scope.error = error;
+	            // $scope.showLogin();
 	            $scope.$apply();
 	          });
 		}else{
@@ -902,7 +913,9 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 		            console.log("PASO");
 		            $scope.result = result;
 		            if(userGet.data[0].validate){
+		            	$scope.setLoggedUser( userGet.data[0]._id, true );
 		            	$scope.findUsersToLogin(credentials.email, true, $scope.showDashboard );
+		            	$localStorage.error = "";
 		            }else{
 		            	$scope.error = "activate your account, an email has been sent to your account."
 		            	console.log($scope.error);
@@ -910,17 +923,33 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 							$localStorage.user = null;
 							localStorage.client = null;
 				       		$localStorage.server = null;
-				       		$scope.loginErrorsCatching( userGet.data[0]._id, userGet.data[0].name, userGet.data[0].email );
+				       		$scope.client.service('notifications').create({
+								type: "block",
+								userId:  userGet.data[0]._id,
+								userName: userGet.data[0].name,
+								userEmail: userGet.data[0].email,
+								title: "Your Account Has Been Blocked",
+								text: '<h1>Welcome '+name+' <br></h1><h2>Click on the link to activate your account '+userGet.data[0].email+'</h2><br><br><a href="http://localhost:3030/activate?id='+userGet.data[0]._id+'&name='+userGet.data[0].name+'&email='+userGet.data[0].email+'">Click Here</a><br><br><img src="http://orig07.deviantart.net/a17c/f/2015/172/2/6/you_shall_not_pass_by_borgster93-d8y4zyd.jpg">'
+							}).then(function(){	
+								$scope.error = "Email activation Notification Sent";
+							}).catch(function(notice_error){	
+								$scope.error = "Error Email activation Notification "+notice_error;
+							});
+
+							$scope.setLoggedUser( userGet.data[0]._id , false );
+				       		// $scope.loginErrorsCatching( userGet.data[0]._id, userGet.data[0].name, userGet.data[0].email );
 						});
 		            }
 		          })
 		          .catch(function(error){
-		            $scope.error = "Credentials Not Valid";
-		            console.log($scope.error);
-		            console.log(error);
 		            if(userGet.data[0])
 		            	$scope.loginErrorsCatching( userGet.data[0]._id, userGet.data[0].name, userGet.data[0].email );
+		            $scope.error = "Credentials Not Valid Failure #"+$scope.loginErrors;
+		            $scope.$apply();
+		            console.log($scope.error);
+		            console.log(error);
 		          });
+		           
 			}else{
 				$scope.error = "Error Retrieving User Data";
 	            console.log($scope.error);
@@ -940,7 +969,7 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
         }else{
         	$scope.loginErrors++;
         }
-        if($scope.loginErrors > 5){
+        if($scope.loginErrors >= 5){
 			console.log("Sending Error Email To "+email);
 			$scope.client.service('users').patch( id, {
 				validate: false
@@ -956,35 +985,50 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 
 				}).then(function(){	
 					$scope.error = "Email activation Notification Sent";
+					$scope.$apply();
+				}).catch(function(notice_error){	
+					$scope.error = "Error Email activation Notification "+notice_error;
+					$scope.$apply();
 				});
 			}).catch(function(){
-				console.log("Error Blocking Account "+email);
+				$scope.error = "Error Blocking Account "+email;
+					$scope.$apply();
 			});
         }
         console.log("Failed Tries: "+$scope.loginErrors);
      	$scope.$apply();	
 	};
 	$scope.signup = function(credentials){
-		console.log("Sign up");
-	    $scope.client.service('users').create(credentials)
-	      .then(function(result) {
-      		console.log("PASO ");
-      		console.log(result);
-            $scope.login(credentials);
-            $scope.$apply();
-          })
-          .catch(function(error){
-            $scope.error = "Error Signin Up";
-            console.log(error);
-            $scope.$apply();
-            // $scope.showSignup();
-          });
+		if(credentials && credentials.name && credentials.email && credentials.password && credentials.username){
+			console.log("Sign up");
+		    $scope.client.service('users').create(credentials)
+		      .then(function(result) {
+	      		console.log("PASO ");
+	      		console.log(result);
+	      		$scope.error = "Activate your account, an email has been sent to your account."
+	      		$localStorage.error = $scope.error;
+	      		$scope.showLogin();
+	            // $scope.login(credentials);
+	            $scope.$apply();
+	          })
+	          .catch(function(error){
+	            $scope.error = "Error Signin Up";
+	            console.log(error);
+	            $scope.$apply();
+	            // $scope.showSignup();
+	          });
+		}else{
+			$scope.error = "Invalid Data, Enter Correct Information, Remember Password 1 Capital Letter, 1 Number minimum";
+		}
 	};
 	$scope.logout = function(){
+		let _id = $localStorage.user._id;
+		$scope.setLoggedUser( _id , false );
 		$scope.client.logout().then(function(){
 			$localStorage.user = null;
 			localStorage.client = null;
        		$localStorage.server = null;
+       		$localStorage.error = "";
 			$scope.showLogin();
 		});
 	};

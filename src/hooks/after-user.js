@@ -13,7 +13,7 @@ module.exports = function (options = {}) { // eslint-disable-line no-unused-vars
 	// console.log(decoded.header);
 	// console.log(decoded.payload);
 	console.log("AFTER");
-	console.log(hook.data);
+	// console.log(hook.data);
 
 	// return hook.app.service('otherservice').find({
  //      query: { email: hook.data.email }

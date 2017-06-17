@@ -17,13 +17,15 @@ module.exports = function() {
     
     const { email } = hook.data;
 
-    console.log(hook);
+    // console.log(hook);
     // Gravatar uses MD5 hashes from an email address to get the image
     const hash = crypto.createHash('md5').update(email).digest('hex');
     hook.data.avatar = `${gravatarUrl}/${hash}?${query}`;
     hook.data.logged = true;
+    hook.data.rooms  = [];
+    hook.data.img    = "https://ssl.gstatic.com/images/branding/product/1x/avatar_circle_blue_512dp.png";
 
-    console.log(hook.data);
+    // console.log(hook.data);
 
     // Hooks can either return nothing or a promise
     // that resolves with the `hook` object for asynchronous operations
