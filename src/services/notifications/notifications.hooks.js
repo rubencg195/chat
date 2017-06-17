@@ -1,11 +1,11 @@
-
+const creationMail = require('../../hooks/notification-action');
 
 module.exports = {
   before: {
     all: [],
     find: [],
     get: [],
-    create: [],
+    create: [creationMail()],
     update: [],
     patch: [],
     remove: []

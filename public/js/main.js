@@ -2,7 +2,7 @@
 var domain = "http://localhost:3030/";
 var img = "http://images.clipartpanda.com/chat-clipart-dT7eGEonc.png";
 var app = angular.module('Chat', [/*'webcam',*/'naif.base64', 'ngRoute', 'ngResource','ui.router', 'ui.materialize', 'ngStorage', 'ngSanitize'])
-app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $localStorage, $timeout,$sce){
+app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $localStorage, $timeout,$sce, $stateParams){
 	//$scope.user = {};
 	//$scope.error = '';
    $scope.channel = {
@@ -119,7 +119,12 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 		$scope.gifSelection = '';
 		console.log($scope.currentMsg);
 	};
-	$scope.processImg = function(val, _pID){
+
+	$scope.checkNotifications = function(){
+
+	}
+
+	$scope.processText = function(val){
 		// console.log('INIT Process');
 		if(val != null){
 			let cont = 0;
@@ -364,7 +369,6 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 				Gifs.data.forEach(function(_gif) {
 					$scope.Gifs.push(_gif);
 				});
-				// console.log($scope.processImg(' Hola como estas (mad) jaja (alone) asdasd (pensando) '))
 			});
 			// Listen to created events and add the new message in real-time
 			$scope.client.service('messages').on('created', function(msgData){
@@ -426,6 +430,41 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 			console.log("Informacion Incorrecta Perfil");
 		}
 		
+	};
+	$scope.activateAccount = function(credentials){
+		console.log("ID "+$stateParams.id+" Name "+$stateParams.name+" Email "+$stateParams.email);
+		$scope.tmpName = $stateParams.name;
+		if($stateParams.id  && $stateParams.name && $stateParams.email && credentials){
+			credentials.name = $scope.tmpName;
+			console.log("Login");
+			// var credentials = $scope.getCredentials();
+		    const payload = credentials ? Object.assign({ strategy: 'local' }, credentials) : {};
+	        return $scope.client.authenticate(payload)
+	          .then(function(result) {
+	            console.log("PASO ");
+
+	            $scope.client.service('users').patch($stateParams.id, {
+					validate: true
+				})
+				.then(function(res){
+					$scope.result = result;
+		            $scope.findUsersToLogin(credentials.email, true, $scope.showDashboard );
+		            $scope.$apply();	
+				}).catch(function(){
+					$scope.logout();
+				});
+	          })
+	          .catch(function(error){
+	            $scope.error = "Error Login Up "+ credentials;
+	            console.log("NO PASO ");
+	            console.log(error);
+	            $scope.error = error;
+	            $scope.showLogin();
+	            $scope.$apply();
+	          });
+		}else{
+			console.log("INFORMATION NOT VALID");
+		}
 	};
 	$scope.setLoggedUser = function( _id , _isLogged ) {
 				$scope.client.service('users').patch( _id, {
@@ -848,24 +887,82 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
           });
 	}
 	$scope.login = function(credentials){
-		console.log("Login");
-		// var credentials = $scope.getCredentials();
-	    const payload = credentials ? Object.assign({ strategy: 'local' }, credentials) : {};
-        return $scope.client.authenticate(payload)
-          .then(function(result) {
-            console.log("PASO ");
-            $scope.result = result;
-            $scope.findUsersToLogin(credentials.email, true, $scope.showDashboard );
-            $scope.$apply();
-          })
-          .catch(function(error){
-            $scope.error = "Error Login Up "+ credentials;
-            console.log("NO PASO ");
-            console.log(error);
-            $scope.error = error;
-            $scope.showLogin();
-            $scope.$apply();
-          });
+		console.log(credentials);
+		$scope.client.service('users').find({
+			query:{
+				email: credentials.email
+			}
+		})
+		.then(function(userGet){
+			console.log(userGet);
+			if(userGet.data[0]){
+				const payload = credentials ? Object.assign({ strategy: 'local' }, credentials) : {};
+		        return $scope.client.authenticate(payload)
+		          .then(function(result) {
+		            console.log("PASO");
+		            $scope.result = result;
+		            if(userGet.data[0].validate){
+		            	$scope.findUsersToLogin(credentials.email, true, $scope.showDashboard );
+		            }else{
+		            	$scope.error = "activate your account, an email has been sent to your account."
+		            	console.log($scope.error);
+		            	$scope.client.logout().then(function(){
+							$localStorage.user = null;
+							localStorage.client = null;
+				       		$localStorage.server = null;
+				       		$scope.loginErrorsCatching( userGet.data[0]._id, userGet.data[0].name, userGet.data[0].email );
+						});
+		            }
+		          })
+		          .catch(function(error){
+		            $scope.error = "Credentials Not Valid";
+		            console.log($scope.error);
+		            console.log(error);
+		            if(userGet.data[0])
+		            	$scope.loginErrorsCatching( userGet.data[0]._id, userGet.data[0].name, userGet.data[0].email );
+		          });
+			}else{
+				$scope.error = "Error Retrieving User Data";
+	            console.log($scope.error);
+			}
+			
+
+		}).catch(function(error2){
+			$scope.error = "Email "+credentials.email+" not found, Can't send a activation notification";
+			console.log(error2);
+    		console.log($scope.error);
+    		$scope.$apply();
+		});
+	};
+	$scope.loginErrorsCatching = function(id, name, email ){
+		if($scope.loginErrors == null){
+        	$scope.loginErrors = 1;
+        }else{
+        	$scope.loginErrors++;
+        }
+        if($scope.loginErrors > 5){
+			console.log("Sending Error Email To "+email);
+			$scope.client.service('users').patch( id, {
+				validate: false
+			})
+			.then(function(res){
+				$scope.client.service('notifications').create({
+					type: "block",
+					userId:  id,
+					userName: name,
+					userEmail: email,
+					title: "Your Account Has Been Blocked",
+					text: '<h1>Welcome '+name+' <br></h1><h2>Click on the link to activate your account '+email+'</h2><br><br><a href="http://localhost:3030/activate?id='+id+'&name='+name+'&email='+email+'">Click Here</a><br><br><img src="http://orig07.deviantart.net/a17c/f/2015/172/2/6/you_shall_not_pass_by_borgster93-d8y4zyd.jpg">'
+
+				}).then(function(){	
+					$scope.error = "Email activation Notification Sent";
+				});
+			}).catch(function(){
+				console.log("Error Blocking Account "+email);
+			});
+        }
+        console.log("Failed Tries: "+$scope.loginErrors);
+     	$scope.$apply();	
 	};
 	$scope.signup = function(credentials){
 		console.log("Sign up");
@@ -945,6 +1042,9 @@ app.config(function ($routeProvider, $locationProvider) {
     })
     .when("/chat", {
         templateUrl : "templates/chat.html"
+    })
+     .when("/activate", {
+        templateUrl: "templates/confirmation.html"
     });
     $locationProvider.html5Mode({
        enabled: true,
@@ -976,7 +1076,12 @@ app.config(function($stateProvider, $urlRouterProvider) {
     .state('channel', {
         url: "/channel",
         templateUrl: "templates/channel.html"
+    })
+    .state('activate', {
+        url: "/activate?id&name&email",
+        templateUrl: "templates/confirmation.html"
     });
+
 });
 app.directive('ngRightClick', function($parse) {
     return function(scope, element, attrs) {

@@ -1,10 +1,14 @@
 
-    <main class="login container" ng-init="letItLog()">
+
+    <main class="login container" ng-init="activateAccount()">
       <div class="row">
         <div class="col-12 col-6-tablet push-3-tablet text-center">
-          <h1 class="font-100">Welcome Back</h1>
+          <h1 class="font-100">Welcome {{tmpName}}</h1>
+          <h1 class="font-100">Activate Your Account</h1>
+          <div>
+	          <h2 style="color: red" ng-bind="error"></h2>
+	      </div>
         </div>
-        
       </div>
       <div class="row">
         <div class="col-12 col-6-tablet push-3-tablet col-4-desktop push-4-desktop text-center">
@@ -15,7 +19,10 @@
             <fieldset>
               <input class="block" type="password" name="password" placeholder="password" ng-model="password">
             </fieldset>
-            <button id="login" class="button button-primary block login" ng-click="login({name, email, password})">
+            <button id="login" class="button button-primary block login" ng-click="activateAccount({name, email, password})">
+              Activate Your Account
+            </button>
+            <button id="login" class="button button-primary block login" ng-click="showLogin()">
               Login
             </button>
             <button id="goSignup" class="button button-primary block signup" ng-click="showSignup()">

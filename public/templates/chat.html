@@ -33,7 +33,7 @@
   </nav>
 
   <div class="container" style="padding-top: 80px; padding-bottom:40px;">
-      <center>
+      <!-- <center> -->
         
         <div class="click-menu" style="padding-top: 5px;" ng-repeat="_msg in inChatMsgs" >
         <div style="border-radius:50px;border: 2px solid#0099ff;width:500px; " ng-right-click="contextUsrSelected = _msg.from; print(contextUsrSelected)">
@@ -42,15 +42,16 @@
               <img src="{{_msg.from.img}}" alt="Contact Person" style="border-radius: 50%; width: 60px;" >
             </div>
             <div class="col s10" style="padding-left: 20px;" ng-init="">
-              <strong> {{_msg.from.name}}</strong>
-              <div ng-bind-html="processImg(_msg.text,_msg._id)"></div>
+              <strong> {{_msg.from.name}}</strong> ~ {{_msg.from.username}}
+
+              <div ng-bind-html="processText(_msg.text)"></div>
               <!-- <p>{{_msg.text}}</p> -->
               <img ng-show="_msg.img != '' " src="{{_msg.img}}" width="300" style="padding-right: 30px;">
             </div>
           </div>
         </div>
 
-      </center>
+      <!-- </center> -->
 
       </div>
       <!-- <div class="" style="padding-top: 5px; float:right;">
@@ -78,7 +79,7 @@
         <i class="material-icons white-text" style="font-size:40px; margin-left:20px;" ng-click="sendMessage(currentMsg, '')">input</i>
         <a href="#modalGif"><i class="fa fa-smile-o fa-3x" aria-hidden="true" style="margin-left:20px; color: white"></i></a>
         <a href="#modalImg"><i class="material-icons white-text" style="font-size:40px; margin-left:20px;">perm_media</i></a>
-        
+
         <!-- <i class="material-icons white-text" style="font-size:40px; margin-left:20px;">add</i>
         <i class="material-icons white-text" style="font-size:38px; margin-left:20px;">present_to_all</i>
  -->      </div>

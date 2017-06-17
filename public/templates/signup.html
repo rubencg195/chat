@@ -18,7 +18,7 @@
               <input class="block" type="email" name="email" placeholder="email" ng-model="email">
             </fieldset>
             <fieldset>
-              <input class="block" type="password" name="password" placeholder="password" ng-model="password">
+              <input class="block" type="password" name="password" placeholder="password" ng-model="password" pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$" title="● Usar Expresión Regular que valide mínimo 8 de longitud, 1 letra Mayúscula y 1 digito">
             </fieldset>
             <button id="signup" class="button button-primary block signup" ng-click="signup({username, name, email, password})">
               Signup

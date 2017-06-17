@@ -11,6 +11,8 @@ const channel = require('./channel');
 
 const dashboard = require('./dashboard');
 
+const activate = require('./activate');
+
 module.exports = function () {
   // Add your custom middleware here. Remember, that
   // in Express the order matters, `notFound` and
@@ -26,6 +28,8 @@ module.exports = function () {
   app.use('/channel', channel());
 
   app.use('/dashboard', dashboard());
+
+  app.use('/activate', activate());
 
   app.use(notFound());
   app.use(handler());

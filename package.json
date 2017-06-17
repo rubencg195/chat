@@ -40,6 +40,7 @@
     "feathers-errors": "^2.6.1",
     "feathers-hooks": "^2.0.0",
     "feathers-hooks-common": "^3.0.0-pre.1",
+    "feathers-mailer": "^1.0.6",
     "feathers-nedb": "^2.6.2",
     "feathers-rest": "^1.7.1",
     "feathers-socketio": "^2.0.0",
