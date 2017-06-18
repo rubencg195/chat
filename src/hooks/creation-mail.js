@@ -7,7 +7,8 @@
 //     return Promise.resolve(hook);
 //   };
 // };
-
+// const domain = "192.168.0.22";
+const domain = "localhost";
 const mailer = require('../mail-config');
  
  module.exports = function(options = {}) {
@@ -22,7 +23,7 @@ const mailer = require('../mail-config');
         to: hook.result.email,
         subject: 'Welcome to Our Chat!',
         // html: 'Follow this link to get you started!<br><a href="http://localhost:3030/validation/' hook.result._id '">Register Account</a>'
-        html: '<h1>Welcome '+hook.result.name+'</h1><h2>Click on the link to activate your account '+hook.result.email+'</h2><br><br><a href="http://localhost:3030/activate?id='+hook.result._id+'&name='+hook.result.name+'&email='+hook.result.email+'">Click Here</a><br><br><img src="https://i.imgflip.com/hjjdh.jpg">'
+        html: '<h1>Welcome '+hook.result.name+'</h1><h2>Click on the link to activate your account '+hook.result.email+'</h2><br><br><a href="http://'+domain+':3030/activate?id='+hook.result._id+'&name='+hook.result.name+'&email='+hook.result.email+'">Click Here</a><br><br><img src="https://i.imgflip.com/hjjdh.jpg">'
      }).then(function (result) {
        console.log('Sent email', result);
      }).catch(err => {

@@ -1,5 +1,6 @@
 'use strict';
-var domain = "http://localhost:3030/";
+// var domain = "http://localhost:3030/";
+var domain = "http://192.168.0.22:3030/";
 var img = "http://images.clipartpanda.com/chat-clipart-dT7eGEonc.png";
 var app = angular.module('Chat', [/*'webcam',*/'naif.base64', 'ngRoute', 'ngResource','ui.router', 'ui.materialize', 'ngStorage', 'ngSanitize'])
 app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $localStorage, $timeout,$sce, $stateParams){
@@ -213,6 +214,9 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 			outVal += tmpVal;
 
 
+			
+
+
 			return outVal;
 		} 
 	};
@@ -371,10 +375,12 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 		console.log("INIT");
 		// console.log($scope);
 		// console.log($scope.client);
+		$scope.showChatFlag = false;
 	};
 
 	$scope.initChat = function(){
 		console.log("INIT CHAT");
+		$scope.showChatFlag = true;
 		// console.log($scope.currentRoom);
 		if($scope.currentRoom != null && $localStorage.user && $scope.client ){
 			$scope.getRooms();
@@ -384,7 +390,7 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 				_messages.data.forEach(function(_message) {
 					if(_message.room == $scope.currentRoom._id){
 							$scope.inChatMsgs.push(_message);
-							// console.log($scope.inChatMsgs);
+							 // console.log($scope.inChatMsgs);
 					}
 				});
 			});
@@ -413,29 +419,51 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 					}
 					$scope.$apply();
 			});
+			// console.log($scope.currentRoom);
+			$scope.updateCurrentChat();
 		}else{
 			console.log($scope.currentRoom);
 			console.log( $localStorage.user );
 			console.log($localStorage.client);
 			console.log("FAILED TO INIT CHAT");
-		}
-		console.log($scope.currentRoom);
-		$scope.updateChatParticipants();		
+		}		
 	};
-
+	$scope.cancelChatUpdate = function(){
+		$timeout.cancel($scope.timer);
+		$scope.showChatFlag = false;
+	};
+	$scope.updateCurrentChat = function(){
+		console.log('Updating Chat '+$scope.showChatFlag);
+		$scope.timer = $timeout(function(){
+			if($scope.showChatFlag){
+				$scope.updateChatParticipants();
+				$scope.updateCurrentChat();
+			}
+		}, 2000);
+		
+	};
 	$scope.updateChatParticipants = function(){
 		if($scope.currentRoom && $scope.currentRoom.participants){
 			$scope.currentRoom.participants.forEach(function(_participant, i){
 				$scope.client.service('users').get(_participant._id).then(function(result){
 					if(result._id){
 						$scope.currentRoom.participants[i] = result;
-						console.log('Updating Participant ', $scope.currentRoom.participants[i]);
+						// console.log('Updating Participant ', $scope.currentRoom.participants[i]);
+						$scope.$apply();
+					}
+				});
+			});
+			$scope.inChatMsgs.forEach(function(_chatMsg, i){
+				$scope.client.service('users').get(_chatMsg.from._id).then(function(result){
+					if(result._id){
+						$scope.inChatMsgs[i].from = result;
+						// console.log('Updating Msg User ', $scope.inChatMsgs[i].from);
 						$scope.$apply();
 					}
 				});
 			});
 		}
-	}
+	};
 
 	$scope.setContextUsr = function(_usr){
 		$scope.contextUsrSelected = _usr;
@@ -586,6 +614,24 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 			    		$("input#currentMsg").val("");
 			    		$scope.currentMsg = '';
 			    		$scope.updateChatParticipants();
+
+			    		$scope.currentRoom.participants.forEach(function(_participant){
+
+							if( _msg.indexOf('@'+_participant.username) != -1 || _msg.indexOf('@all') != -1  ){
+								$scope.client.service('notifications').create({
+									type: "block",
+									userId:  _participant._id,
+									userName: _participant.name,
+									userEmail: _participant.email,
+									title: "You have received a message",
+									text: '<h1>Hi '+_participant.name+'! <br></h1> '+$scope.user.name+' has sent you the next message: <br><br> '+_msg+' <br><br> <img src="'+_img+'"> <br><br>Reply Back! <br><br>'
+								}).then(function(){	
+									$scope.error = "Email activation Notification Sent";
+								}).catch(function(notice_error){	
+									$scope.error = "Error Email activation Notification ";
+								});
+							}
+						});
 			    		// console.log($scope);
 						// console.log(result);
 						// console.log($scope.currentRoom);
@@ -971,7 +1017,7 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 								userName: userGet.data[0].name,
 								userEmail: userGet.data[0].email,
 								title: "Your Account Has Been Blocked",
-								text: '<h1>Welcome '+name+' <br></h1><h2>Click on the link to activate your account '+userGet.data[0].email+'</h2><br><br><a href="http://localhost:3030/activate?id='+userGet.data[0]._id+'&name='+userGet.data[0].name+'&email='+userGet.data[0].email+'">Click Here</a><br><br><img src="http://orig07.deviantart.net/a17c/f/2015/172/2/6/you_shall_not_pass_by_borgster93-d8y4zyd.jpg">'
+								text: '<h1>Welcome '+name+' <br></h1><h2>Click on the link to activate your account '+userGet.data[0].email+'</h2><br><br><a href="'+domain+'activate?id='+userGet.data[0]._id+'&name='+userGet.data[0].name+'&email='+userGet.data[0].email+'">Click Here</a><br><br><img src="http://orig07.deviantart.net/a17c/f/2015/172/2/6/you_shall_not_pass_by_borgster93-d8y4zyd.jpg">'
 							}).then(function(){	
 								$scope.error = "Email activation Notification Sent";
 							}).catch(function(notice_error){	
@@ -1023,7 +1069,7 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 					userName: name,
 					userEmail: email,
 					title: "Your Account Has Been Blocked",
-					text: '<h1>Welcome '+name+' <br></h1><h2>Click on the link to activate your account '+email+'</h2><br><br><a href="http://localhost:3030/activate?id='+id+'&name='+name+'&email='+email+'">Click Here</a><br><br><img src="http://orig07.deviantart.net/a17c/f/2015/172/2/6/you_shall_not_pass_by_borgster93-d8y4zyd.jpg">'
+					text: '<h1>Welcome '+name+' <br></h1><h2>Click on the link to activate your account '+email+'</h2><br><br><a href="'+domain+'activate?id='+id+'&name='+name+'&email='+email+'">Click Here</a><br><br><img src="http://orig07.deviantart.net/a17c/f/2015/172/2/6/you_shall_not_pass_by_borgster93-d8y4zyd.jpg">'
 
 				}).then(function(){	
 					$scope.error = "Email activation Notification Sent";
