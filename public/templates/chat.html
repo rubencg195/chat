@@ -12,7 +12,13 @@
   <li><a href="#!"></a>Back</li>
   <li><div class="divider"></div></li>
   <li><a class="subheader">Participants</a></li>
-  <li  ng-repeat="_participant in currentRoom.participants" ng-click=""><a class="waves-effect">{{_participant.name}}</a></li>
+  <li  ng-repeat="_participant in currentRoom.participants" class="click-menu" ng-right-click="setContextUsr(_participant)">
+        <a class="waves-effect">
+            {{_participant.name}} 
+            <i ng-show="_participant.logged" style="color: green;" class="fa fa-circle" aria-hidden="true"></i>
+            <i ng-show="!_participant.logged" class="fa fa-dot-circle-o" aria-hidden="true"></i>
+        </a>
+  </li>
 </ul>
 
 
@@ -47,7 +53,7 @@
 
               <div ng-bind-html="processText(_msg.text)"></div>
               <!-- <p>{{_msg.text}}</p> -->
-              <img ng-show="_msg.img != '' " src="{{_msg.img}}" width="300" style="padding-right: 30px;">
+              <img ng-show="_msg.img" src="{{_msg.img}}" width="300" style="padding-right: 30px;">
             </div>
           </div>
         </div>
@@ -55,19 +61,6 @@
 
       </center>
 
-      <!-- <div class="" style="padding-top: 5px; float:right;">
-        <div style="border-radius: 50px; border: 2px solid  #0099ff;  padding-top: 10px;  width: 500px; height: 100px; ">
-          <div class="row">
-            <div class="col s2" style="padding-left: 30px; ">
-              <img src="http://materializecss.com/images/yuna.jpg" alt="Contact Person" style="border-radius: 50%; width: 60px;" >
-            </div>
-            <div class="col s10" style="padding-left: 20px;">
-              <strong> Jane Doe</strong>
-              <p>Hola</p>
-            </div>
-          </div>
-        </div>
-      </div> -->
   </div>
 
   <div class="container-fluid blue lighten-1s" style="height: 60px; position: fixed;bottom: 0;width: 100%; padding-left:300px;">
@@ -144,7 +137,7 @@
       <div class="file-path-wrapper">
         <input id="inp" class="file-path validate" type="text" ng-model="fileUpload"  ng-change="previewChatImg()">
         <div class="center">
-            <img id="imgUploadChat" src="">
+            <img id="imgUploadChat" src="http://meme.vidmate.mobi/img/meme_upload.png">
             <h3>Resized Before Upload</h3>
             <canvas id="canvas"></canvas>
         </div>

@@ -419,7 +419,24 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 			console.log($localStorage.client);
 			console.log("FAILED TO INIT CHAT");
 		}
+		console.log($scope.currentRoom);
+		$scope.updateChatParticipants();		
 	};
+
+	$scope.updateChatParticipants = function(){
+		if($scope.currentRoom && $scope.currentRoom.participants){
+			$scope.currentRoom.participants.forEach(function(_participant, i){
+				$scope.client.service('users').get(_participant._id).then(function(result){
+					if(result._id){
+						$scope.currentRoom.participants[i] = result;
+						console.log('Updating Participant ', $scope.currentRoom.participants[i]);
+						$scope.$apply();
+					}
+				});
+			});
+		}
+	}
+
 	$scope.setContextUsr = function(_usr){
 		$scope.contextUsrSelected = _usr;
 	};
@@ -568,6 +585,7 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 			    }).then(result=>{
 			    		$("input#currentMsg").val("");
 			    		$scope.currentMsg = '';
+			    		$scope.updateChatParticipants();
 			    		// console.log($scope);
 						// console.log(result);
 						// console.log($scope.currentRoom);
