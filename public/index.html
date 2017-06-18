@@ -22,6 +22,42 @@
 		    <h2 ng-show="error.trim()!='' && user==null"><center ng-bind="error" style="color: red;"></center></h2>
 		    <div ng-init="init()" ui-view=""></div>
 
+
+			<div id="profileModal" class="modal bottom-sheet">
+			    <div class="modal-content">
+			      <h1>{{contextUsrSelected.name}}</h1>
+			      <div class="container row">
+				    <div class="col s12">
+							<div class="row">
+								<div class="input-field col s6" ng-init>
+									<center>
+										<img id="imgProfileUpload" src="{{contextUsrSelected.img}}" height="250">
+									</center>
+						        </div>
+						        <div class="input-field col s6">
+							        <div class="row">
+							        	<div class="col-sx-6"><i class="material-icons">account_circle</i> <strong>USERNAME</strong> </div>
+							        	<div class="col-sx-6"><h3>{{contextUsrSelected.username}}</h3></div>
+							        </div>
+							        <div class="row">
+							        	<div class="col-sx-6"><i class="material-icons">account_circle</i> <strong> NAME </strong> </div>
+							        	<div class="col-sx-6"><h3>{{contextUsrSelected.name}}</h3></div>
+							        </div>
+									<div class="row">
+										<div class="col-sx-6"><i class="material-icons">account_circle</i> <strong> PASSWORD</strong></div>
+										<div class="col-sx-6"><h3>{{contextUsrSelected.email}}</h3></div>
+							        </div>
+						        </div>
+							</div>
+				    </div>
+				  </div>
+			    </div>
+			    <div class="modal-footer">
+			      <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Close</a>
+			    </div>
+			</div>
+          
+
 	    </div>
 		 <!--Import jQuery before materialize.js-->
 	    <script src="./js/dependencies/moment.js"></script>

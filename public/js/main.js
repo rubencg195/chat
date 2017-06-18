@@ -319,6 +319,14 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 					});
 				}
 			});
+
+			$scope.client.service('users').on('patched', _user => {
+				if(_user._id == $scope.user._id){
+					console.log('My User patched', _user);
+					$scope.getRooms();
+					$scope.getContacts();
+				}
+			});
 		}
 		
 
@@ -329,17 +337,29 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 		    items: {
 		        friend: {name: "Agregar como amigo", callback: function(key, opt){ 
 		        	console.log("agregar amigo!"); 
-		        	$timeout(function () {
-						console.log($scope.contextUsrSelected);
-					}, 100);		        	
+					if($scope.contextUsrSelected){
+						$scope.createContact($scope.contextUsrSelected.email);
+					}
+							        	
 		        }},
 		        private: {name: "Iniciar chat privado", callback: function(key, opt){ 
 		        	console.log("privado!");
-		        	console.log($scope.contextUsrSelected);
+		        	if($scope.contextUsrSelected){
+						$scope.Contacts.forEach(function(_contact, i){
+							$scope.Contacts[i].selected = false;
+						});
+						$scope.Contacts.forEach(function(_cData, i){
+							if(_cData.contact == $scope.contextUsrSelected._id){
+								$scope.Contacts[i].selected = true;
+							}
+						});
+						$scope.createRooms( true, "");
+					}
 		        }},
 		        info: {name: "Ver información del perfil", callback: function(key, opt){ 
 		        	console.log("perfil!"); 
 		        	console.log($scope.contextUsrSelected);
+		        	 $('#profileModal').modal('open');
 		        }}
 		    }
 		    // there's more, have a look at the demos and docs...
@@ -399,6 +419,9 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 			console.log($localStorage.client);
 			console.log("FAILED TO INIT CHAT");
 		}
+	};
+	$scope.setContextUsr = function(_usr){
+		$scope.contextUsrSelected = _usr;
 	};
 
 	$scope.cleanTmpData = function(){
@@ -662,6 +685,7 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 						});
 			    	$scope.Contacts.forEach(function(element){ element.selected = false; });
 			    	$scope.selectedRoomName = '';
+			    	console.log("Chat Created", result);
 			    });
 			}
 		}
@@ -1057,6 +1081,7 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 	};
 	$scope.print = function(value){
 		console.log(value);
+		console.log($scope);
 	};
 	$scope.islogin = function(){
 		if($localStorage.user == null){
