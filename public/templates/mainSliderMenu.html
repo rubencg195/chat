@@ -15,6 +15,7 @@
       <li><a ng-click="" href="#modalContact"  >Add Contact</a></li>
       <li><a ng-click="" href="#modalChat"     >Create Private Room</a></li>
       <li><a ng-click="" href="#modalChannel"  >Create Channel</a></li>
+      <li><a ng-click="" href="#modalInvitRequest"  >All Public Channel</a></li>
       <li><a href=""     ng-click="logout()"   >Logout</a></li>
       <!-- <li><a class="dropdown-button" href="#!" data-activates="dropdown1">Dropdown<i class="material-icons right">arrow_drop_down</i></a></li> -->
     </ul>
@@ -28,7 +29,8 @@
       <li class="tab"><a class="active"  href="#msgs">Messages</a></li>
       <li class="tab"><a href="#channels">Channels</a></li>
       <li class="tab"><a href="#contacts">Contacts</a></li>
-      <li class="tab"><a href="#gif">Create Emoji</a></li> <!-- disabled -->
+      <li class="tab"><a href="#gif">Create Emoji</a></li>
+      <li class="tab"><a href="#invitations">Room Entrance Request</a></li>
       <li class="tab"><a href="#settings">Settings</a></li>
     </ul>
   </div>
@@ -37,29 +39,100 @@
 <div id="channels" class="col s12">  <ng-include src="'./templates/channels.html'" ></ng-include>  </div>
 <div id="contacts" class="col s12">  <ng-include src="'./templates/contacts.html'" ></ng-include>  </div>
 <div id="gif" class="col s12 center">  <ng-include src="'./templates/gif.html'" ></ng-include>  </div>
+<div id="invitations" class="col s12">
+  <ul class="collection" >
+    <li class="collection-item avatar" ng-repeat="invit in Invitations" ng-show="!invit.readed">  <!--ui-sref="chat"-->
+      <i class="material-icons circle green"  >insert_chart</i>
+      <span class="title"><h4 ng-bind="invit.room.name"></h4></span>
+      <h5 ng-bind="invit.from.name"></h5>
+      <h5 ng-bind="invit.from.email"></h5>
+      <!-- <p ng-bind="room.date"></p><br> -->
+      <a href="#!" class="secondary-content">
+        <a class="waves-effect waves-light btn" ng-click="acceptInvitations(invit, true)">
+            <i class="material-icons left">done</i>accept
+        </a>
+        <a class="waves-effect waves-light btn" ng-click="acceptInvitations(invit, false)">
+            <i class="material-icons left">cancel</i>reject
+        </a>
+        <!-- <i class="material-icons">grade</i> -->
+      </a>
+    </li>
+  </ul>
+</div>
 <div id="settings" class="col s12"> <ng-include src="'./templates/settings.html'" ></ng-include>  </div>
 
 
 <!-- Modal Add Contact -->
-<div id="modalContact" class="modal modal-fixed-footer">
+<div id="modalInvitRequest" class="modal modal-fixed-footer">
   <div class="modal-content">
-    <h1>Create Contact</h1>
+    <h1>Find Room And Send Request</h1>
     <p>Fill Out The Information</p>
     <br>
 
-    <div class="row center" style="width: 100%">
+    <div class="row center" style="width: 100%" ng-init="getAllRooms()"> 
       <form class="col s12">
         <div class="row">
           <div class="input-field col s12">
-            <input id="email" type="email" class="validate"  ng-model="cEmail">
-            <label for="email" data-error="wrong" data-success="right">Email</label>
+            <input id="roomName" type="text" class="validate" ng-keyup="getAllRooms(); roomToAdd = null">
+            <label for="roomName" data-error="wrong" data-success="right">Room Name</label>
           </div>
+          <ul class="collection">
+            <li class="collection-item avatar" ng-repeat="cData in allRooms" ng-click="cData.selected = !cData.selected; selectInvitationRoom(cData)" ng-show="!cData.private">
+                <i class="material-icons circle green">insert_chart</i>
+                <span class="title">
+                  <h5 ng-bind="cData.name"></h5>
+                </span>
+                <h6 ng-bind="cData.email"></h6>
+                <p ng-bind="cData._id"></p><br>
+                <a class="secondary-content" ng-show="cData.selected">
+                    <i class="material-icons" style="font-size: 50px;" ng-show="cData.selected">done</i>
+                </a>
+            </li>
+          </ul>
         </div>
       </form>
     </div>
   </div>
   <div class="modal-footer">
-    <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat" ng-click="createContact(cEmail)">Create</a>
+    <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat" ng-click="requestInvitation()"  ng-show="roomToAdd!=null" >Add</a>
+    <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Cancel</a>
+  </div>
+</div>
+
+
+<!-- Modal Add Contact -->
+<div id="modalContact" class="modal modal-fixed-footer">
+  <div class="modal-content">
+    <h1>AddFriend</h1>
+    <p>Fill Out The Information</p>
+    <br>
+
+    <div class="row center" style="width: 100%" ng-init="getAllUsers()"> 
+      <form class="col s12">
+        <div class="row">
+          <div class="input-field col s12">
+            <input id="contactEmail" type="email" class="validate" ng-keyup="getAllUsers();" ng-model="cEmail" >
+            <label for="email" data-error="wrong" data-success="right">Email</label>
+          </div>
+          <ul class="collection">
+            <li class="collection-item avatar" ng-repeat="cData in allUsers" ng-click="cData.selected = !cData.selected; selectFriend(cData)">
+                <i class="material-icons circle green">insert_chart</i>
+                <span class="title">
+                  <h5 ng-bind="cData.name"></h5>
+                </span>
+                <h6 ng-bind="cData.email"></h6>
+                <p ng-bind="cData._id"></p><br>
+                <a class="secondary-content" ng-show="cData.selected">
+                    <i class="material-icons" style="font-size: 50px;" ng-show="cData.selected">done</i>
+                </a>
+            </li>
+          </ul>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat" ng-click="createContact(userToAdd.email)" >Add</a>
     <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Cancel</a>
   </div>
 </div>

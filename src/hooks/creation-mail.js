@@ -7,8 +7,8 @@
 //     return Promise.resolve(hook);
 //   };
 // };
-// const domain = "192.168.0.22";
-const domain = "localhost";
+const domain = "192.168.1.139";
+// const domain = "localhost";
 const mailer = require('../mail-config');
  
  module.exports = function(options = {}) {

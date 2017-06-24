@@ -1,6 +1,6 @@
 'use strict';
 // var domain = "http://localhost:3030/";
-var domain = "http://192.168.0.22:3030/";
+var domain = "http://192.168.1.139:3030/";
 var img = "http://images.clipartpanda.com/chat-clipart-dT7eGEonc.png";
 var app = angular.module('Chat', [/*'webcam',*/'naif.base64', 'ngRoute', 'ngResource','ui.router', 'ui.materialize', 'ngStorage', 'ngSanitize'])
 app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $localStorage, $timeout,$sce, $stateParams){
@@ -58,7 +58,7 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 				console.log("File Size "+ file.size/1024 + " W: "+tmp.width+" H: "+tmp.height );
 				// console.log(tmp);
 
-				if( (file.size/1024) < 50  ){
+				if( (file.size/1024) < 100  ){
 					preview.src = reader.result;
 					$scope.imgUpload =  reader.result;
 					$scope.disabletUpload = false;
@@ -297,9 +297,23 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 		if( $localStorage.user &&  $scope.client){
 			$scope.getRooms();
 			$scope.getContacts();
+			$scope.getInvitations();
 			$scope.profileUsername = $scope.user.username;
 			$scope.profileName = $scope.user.name;
 			$scope.profileEmail = $scope.user.email;
+
+			
+			$scope.client.service('users').on('created', function(_notice){
+				$scope.getAllUsers();
+			});
+
+			$scope.client.service('invitations').on('created', function(_invitation){
+				if(_invitation.owner == $scope.user._id){
+					$scope.getRooms();
+					$scope.getContacts();
+					$scope.getInvitations();
+				}
+			});
 
 			$scope.client.service('notifications').on('created', function(_notice){
 				console.log(_notice);
@@ -364,6 +378,12 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 		        	console.log("perfil!"); 
 		        	console.log($scope.contextUsrSelected);
 		        	 $('#profileModal').modal('open');
+		        }},
+		        deleteFromChat: {name: "Borrar del Chat", callback: function(key, opt){ 
+		        	console.log("Delete From Chat! ",$scope.currentRoom ); 
+		        	console.log($scope.contextUsrSelected);
+		        	$scope.deleteRoomToUser( $scope.contextUsrSelected._id, $scope.currentRoom._id );
+		        	$scope.openChatByRoom($scope.currentRoom._id);
 		        }}
 		    }
 		    // there's more, have a look at the demos and docs...
@@ -378,6 +398,28 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 		$scope.showChatFlag = false;
 	};
 
+	$scope.contactsNotInChat = function(){
+		$scope.contactsNotInChatList = [];
+		$scope.getContacts();
+
+		$timeout(function(){
+			$scope.Contacts.forEach( function( _contact ){
+				let _user = _contact.contact;
+				if(  _user._id != $scope.user._id ){
+					$scope.contactsNotInChatList.push(_user);
+				}
+			});
+		}, 500);
+	}
+
+	$scope.selectNextContact2 = function(cData){
+		$scope.contactsNotInChatList = [];
+		$scope.contactsNotInChatList.push(cData);
+		if(cData.selected == false){
+			$scope.contactsNotInChat();
+		}
+	};
+
 	$scope.initChat = function(){
 		console.log("INIT CHAT");
 		$scope.showChatFlag = true;
@@ -386,6 +428,7 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 			$scope.getRooms();
 			$scope.getContacts();
 			$scope.inChatMsgs = [];
+			$scope.contactsNotInChat();
 			$scope.client.service("messages").find().then(_messages=>{
 				_messages.data.forEach(function(_message) {
 					if(_message.room == $scope.currentRoom._id){
@@ -420,6 +463,22 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 					$scope.$apply();
 			});
 			// console.log($scope.currentRoom);
+			$scope.client.service('rooms').get($scope.currentRoom._id).then(roomResult => {
+				$scope.currentRoom = roomResult;
+				$scope.client.service('users').find().then(result =>{
+						if(result.data != null){
+							$scope.currentRoom.participants = [];
+							result.data.forEach(function(_user){
+								if(_user.rooms != null && _user.rooms.indexOf($scope.currentRoom._id) != -1  )
+									$scope.currentRoom.participants.push(_user);
+							});
+							console.log($scope.currentRoom);
+							$localStorage.currentRoom = $scope.currentRoom;
+						}
+				});
+			}).catch(error => {
+				console.log("Room No Existe");
+			});
 			$scope.updateCurrentChat();
 		}else{
 			console.log($scope.currentRoom);
@@ -437,6 +496,7 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 		$scope.timer = $timeout(function(){
 			if($scope.showChatFlag){
 				$scope.updateChatParticipants();
+				// $scope.contactsNotInChat();
 				$scope.updateCurrentChat();
 			}
 		}, 2000);
@@ -663,9 +723,9 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 		});
 	};
 	$scope.getRooms = function(){
-		$scope.Rooms = [];
-		$scope.Channels = [];
 		$scope.client.service('users').get($scope.user._id).then(function(result){
+			$scope.Rooms = [];
+			$scope.Channels = [];
 			$scope.user = result;
 			$localStorage.user = result;
 			if($scope.user.rooms == null){
@@ -719,10 +779,12 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 		}else{
 			let valid = true;
 			if(_private){
-				_name = selectedContacts[0].name;
 				$scope.Rooms.forEach(function(_room){
-					console.log(_room.name + " - "+ _name);
-					if(_room.name == _name){
+					let tempName = _name;
+					if(_private)
+						tempName = selectedContacts[0].name;
+					console.log(_room.name + " - "+ tempName);
+					if(_room.name == tempName){
 						console.log('Room Ya Existe, Use otro nombre o eliga otro Usuario');
 						valid = false;
 					}
@@ -737,6 +799,8 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 				});
 			}
 			if(valid){
+				if(_private)
+					_name = selectedContacts[0].name;
 				participants.push({id: $scope.user._id});
 				$scope.client.service('rooms').create({
 					owner: $scope.user._id,
@@ -758,26 +822,27 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 		}, 250);
 	};
 	$scope.addRoomToUser =  function( _userId,  _RoomId  ) {
-				$scope.findUserById( _userId ).then(function(userData){
-						let participantData = userData;
-						if( participantData.rooms == null){
-							participantData.rooms = [];
-						}
-						if(participantData.rooms.indexOf(_RoomId) != -1 ){
-							console.log("Room Ya Existe");
-							return;
-						}
-						participantData.rooms.push( _RoomId  );
-						$scope.client.service('users').patch( _userId, {
-								rooms: participantData.rooms
-						})
-						.then(function(result){
-									if(result._id == $scope.user._id){
-										$scope.user = result;
-										$localStorage.user = result;
-									}
-						});
+		$scope.findUserById( _userId ).then(function(userData){
+			let participantData = userData;
+			if( participantData.rooms == null){
+				participantData.rooms = [];
+			}
+			if(participantData.rooms.indexOf(_RoomId) != -1 ){
+				console.log("Room Ya Existe");
+			}else{
+				participantData.rooms.push( _RoomId  );
+				$scope.client.service('users').patch( _userId, {
+						rooms: participantData.rooms
+				})
+				.then(function(result){
+					if(result._id == $scope.user._id){
+						$scope.user = result;
+						$localStorage.user = result;
+					}
 				});
+			}
+				
+		});
 	};
 	$scope.deleteRoomToUser =  function( _userId,  _RoomId  ) {
 				$scope.findUserById( _userId ).then(function(userData){
@@ -838,6 +903,111 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 
 		}
 	};
+
+	$scope.getAllRooms = function(){
+		let roomName = $('input#roomName').val();
+		$scope.client.service('rooms').find().then(function(result){
+			$scope.allRooms = result.data;
+			if( roomName != null && roomName.trim() != '' && result.total > 0 ){
+				let tmpArr = [];
+				$scope.allRooms.forEach(function(_room){
+					if( _room.name.includes(roomName) != -1 && $scope.user.rooms.includes(_room._id) == false ){
+						tmpArr.push(_room);
+					}
+					$scope.allRooms = tmpArr;
+				});
+			}else{
+				if( result.total == 0 ){
+					$scope.allRooms = [];
+				}
+			}
+			console.log("All users, roomName selected: "+roomName, $scope.allRooms);
+			$scope.roomToAdd = null;
+			$scope.$apply();
+		});		
+	};
+
+	$scope.selectInvitationRoom = function(_room){
+		$scope.allRooms = [];
+		$scope.roomToAdd = _room;
+		$scope.allRooms.push(_room);
+		// console.log("Friend to add: ", $scope.roomToAdd);
+	};
+
+	$scope.requestInvitation = function(){
+		if($scope.roomToAdd){
+			let _from = $scope.user._id;
+			let _to   = $scope.roomToAdd.owner;
+			let _room = $scope.roomToAdd._id; 
+			console.log("Request: from: ", _from, " to ",_to, " room ",_room);
+			$scope.client.service('invitations').create({
+				owner : _to,
+				from  : _from,
+				room  : _room
+			}).then(result=>{
+				console.log("requestInvitation ", result );
+			});
+		}else{
+			console.log("No Room selected");
+		}
+		
+	};
+
+	$scope.getAllUsers = function(){
+		let email = $('input#contactEmail').val();
+		$scope.client.service('users').find().then(function(result){
+			$scope.allUsers = result.data;
+			if( email != null && email.trim() != '' && result.total > 0 ){
+				let tmpArr = [];
+				$scope.allUsers.forEach(function(_user){
+					if(_user.email.indexOf(email) != -1){
+						tmpArr.push(_user);
+					}
+					$scope.allUsers = tmpArr;
+				});
+			}else{
+				if( result.total == 0 ){
+					$scope.allUsers = [];
+				}
+			}
+			// console.log("All users, email selected: "+email, $scope.allUsers);
+			$scope.userToAdd = null;
+			$scope.$apply();
+		});		
+	};
+
+	$scope.selectFriend = function(friend){
+		$scope.allUsers = [];
+		$scope.userToAdd = friend;
+		$scope.allUsers.push(friend);
+		// $('input#contactEmail').val(friend.email);
+		$scope.cEmail = friend.email; 
+		console.log("Friend to add: ", $scope.userToAdd);
+		
+	}
+	$scope.selectContactToAdd = function(cData){
+		$scope.selectedUserToAdd = cData;
+		console.log("selectedUserToAdd: ",$scope.selectedUserToAdd);
+	};
+	$scope.addUserToChatUpdate = function(){
+		if($scope.selectedUserToAdd && $scope.selectedUserToAdd._id){
+			$scope.addRoomToUser( $scope.selectedUserToAdd._id , $scope.currentRoom._id );
+			$timeout(function() {
+				$scope.openChatByRoom($scope.currentRoom._id);
+			}, 500);
+		}else{
+			console.log("No user selected");
+		}
+	};
+
+	// $scope.$watch('cEmail', function(newValue, oldValue){
+	//     console.log("cEmail ", $scope.cEmail);
+	// }, true);
+
+	$scope.closeModals = function(){
+		$('.modal').modal('close');
+	};
+
 	$scope.getContacts = function(){
 	    $scope.client.service('contacts').find({
 		  query: {
@@ -860,24 +1030,41 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 	    });
 	};
 	$scope.createContact = function(contactEmail){
-		$scope.findUsersByEmail(contactEmail).then(function(userData){
-			var newContact = userData;
-			if(newContact != null){
-				console.log("Creating contact");
-				console.log(newContact);
-			}else{
-				$scope.error = "User Not Found"
-				console.log($scope.error);
-				return;
-			}
-		    $scope.client.service('contacts').create({
-				owner: $scope.user._id,
-				contact: newContact._id
-		    }).then(function(result){
-		    	console.log(result);
-		    	$scope.getContacts();
-		    });
-		});
+		console.log("Email to create conotact: ", contactEmail);
+		if(contactEmail != null && contactEmail != $scope.user.email){
+			$scope.findUsersByEmail(contactEmail).then(function(userData){
+				var newContact = userData;
+				if(newContact != null){
+					console.log(newContact, $scope.Contacts);
+
+					let finded = false;
+				    $scope.Contacts.forEach(function(_tmpContact){
+				    	if( _tmpContact.contact._id == newContact._id ){
+				    		console.log(_tmpContact._id +" - "+ newContact._id);
+				    		finded = true;
+				    	}
+				    });
+				    if(finded == false){
+				    	$scope.client.service('contacts').create({
+							owner: $scope.user._id,
+							contact: newContact._id
+					    }).then(function(result){
+					    	console.log("Creating contact");
+					    	console.log(result);
+					    	$scope.getContacts();
+					    });
+				    }else{
+				    	console.log("Cant Add User Already In Contacts");
+				    }
+
+				}else{
+					$scope.error = "User Not Found"
+					console.log($scope.error);
+				}
+			});
+		}else{
+			console.log("Cant Create a Contact of Yourself or info equal null");
+		}
 	};
 	$scope.selectNextContact = function(cData){
 		if($scope.selectedContact){
@@ -890,24 +1077,45 @@ app.controller('mainCtrl', function($scope, $route, $routeParams , $location, $l
 		}else{
 			$scope.selectedContact = cData;
 		}
-	}
+	};
+	
 	$scope.getInvitations = function(){
-	    $scope.client.service('invitations').find(/* {
-	      text: input.val()
-	    }*/).then(function(result){
-	    	console.log(result.data);
+	    $scope.client.service('invitations').find().then(function(result){
+	    	if(result.total > 0){
+	    		let tmpArr = result.data;
+	    		$scope.Invitations = [];
+	    		tmpArr.forEach(function(tmpInvit){
+	    			if(tmpInvit.owner == $scope.user._id){
+	    				$scope.client.service('rooms').get(tmpInvit.room).then(function(_room){
+	    					$scope.client.service('users').get(tmpInvit.from).then(function(_user){
+		    					if(_room._id != null){
+		    						tmpInvit.room = _room;
+		    						tmpInvit.from = _user;
+		    						$scope.Invitations.push(tmpInvit);
+		    					}
+		    					console.log("Invitation: ", tmpInvit );
+		    				});
+	    				});
+	    			}
+	    		});
+	    	}
 	    	$scope.$apply();
 	    });
 	};
-	$scope.createInvitations = function(){
-	    $scope.client.service('invitations').create({
-			emailTo: "",
-			emailFrom: "",
-			roomId: ""
-	    }).then(function(result){
-	    	console.log(result.data);
-	    	$scope.$apply();
-	    });
+	$scope.acceptInvitations = function(invit, accept){
+		if(accept){
+			$scope.addRoomToUser( invit.from._id,  invit.room._id  );
+			 $scope.client.service('invitations').patch( invit._id,{
+				readed : true
+		    }).then(function(result){
+		    	console.log("Invitations accept ",result);
+		    	
+		    	$scope.getInvitations();
+		    	$scope.$apply();
+		    }); 
+		}else{
+			console.log("Invitation Data not correct");
+		}
 	};
 	$scope.getUsers = function(){
 		$scope.client.service('users').find()
